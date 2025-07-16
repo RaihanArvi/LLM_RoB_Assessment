@@ -225,7 +225,7 @@ def upload_all_pdfs():
     Returns a dictionary: {file_name: file_id}
     """
     uploaded_files = {}
-    print("Uploading " + len(os.listdir(pdf_input_folder)) + " files.")
+    print("Uploading " + str(len(os.listdir(pdf_input_folder))) + " files.")
 
     for file_name in sorted(os.listdir(pdf_input_folder)):
         if not file_name.lower().endswith(".pdf"):
