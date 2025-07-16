@@ -155,7 +155,7 @@ def delete_all_stored_files():
 def get_file_name_id_dict():
     file_dict = {}
     files = client.files.list()
-    for file in files.data:
+    for file in files:
         file_dict[file.filename] = file.id
     return file_dict
 
