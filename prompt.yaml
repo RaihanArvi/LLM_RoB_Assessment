@@ -1,0 +1,14 @@
+Intro: |
+  You are an expert in risk of bias assessment...
+
+Criteria:
+  a: |
+    Evaluate selection bias.
+  b: |
+    Evaluate blinding.
+  c: |
+    Evaluate outcome reporting.
+
+OutputFormat: |
+  Your output must include detailed reasoning followed by a final line:
+  Assessment: [Low/High/Unclear risk]

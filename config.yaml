@@ -1,0 +1,12 @@
+api_key: ""
+model: "gpt-4o"
+temperature: 0.2
+mode: "one_by_one"  # or "all_in_one"
+
+# Prompt
+prompt_file_path: "prompt.yaml"
+
+# Input - Output
+pdf_input_files_folder: "pdf_papers"
+plain_text_input_files_folder: "markdown_files"
+output_files_folder: "output"
