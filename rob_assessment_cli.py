@@ -50,8 +50,19 @@ def pdf_input_menu():
             print("Invalid choice. Try again.")
 
 def plain_text_menu():
-    print("\nPlain Text Assessment:")
-    text = input("Enter text to assess: ").strip()
+    while True:
+        print("\nStart plain text assessment?")
+        print("[1] Start")
+        print("[b] Back to Main Menu")
+        choice = input("Select an option: ").strip()
+
+        if choice == "1":
+            print("\nStarting risk-of-bias assessment...")
+            rob_assessment.process_plain_text()
+        elif choice.lower() == "b":
+            break
+        else:
+            print("Invalid choice. Try again.")
 
 def start_assessment(input_data):
     print(f"Starting assessment on: {input_data}")
