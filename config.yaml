@@ -1,7 +1,6 @@
 api_key: ""
 model: "gpt-4o"
 temperature: 0.2
-mode: "one_by_one"  # or "all_in_one"
 
 # Prompt
 prompt_file_path: "prompt.yaml"
