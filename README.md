@@ -1,5 +1,7 @@
 # LLM-Based Risk of Bias (RoB) Assessment Tool
 
+[![Website](https://img.shields.io/badge/Website-Raihan_Arvi-red)](https://www.raihanarvi.com)
+
 This project automates the Risk of Bias (RoB) assessment of research papers using OpenAI's large language models. It supports both PDF and plain text inputs and outputs a structured CSV summary along with detailed reasoning.
 
 This tool is a part of the AIRS Project.
@@ -42,5 +44,3 @@ python rob_assessment_cli.py
 5. After processing, results will appear in the `output/` folder:
    - assessment_summary.csv
    - assessment_notes.txt
-
-[![Website](https://img.shields.io/badge/Website-Raihan_Arvi-red)](https://www.raihanarvi.com)
