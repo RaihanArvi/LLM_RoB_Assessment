@@ -10,5 +10,27 @@ Criteria:
     Evaluate outcome reporting.
 
 OutputFormat: |
-  Your output must include detailed reasoning followed by a final line:
-  Assessment: [Low/High/Unclear risk]
+  # Output Format
+  
+  ...
+  
+  
+  ### Summary Field
+  For each reported outcome in the RCT, provide the evaluation results in the following format for the "summary":
+
+  Only return a CSV entry with exactly the following columns, all lowercase:
+
+  ["criteria a", "criteria b",
+   "criteria c.1", "criteria c.2", "criteria c.3", "criteria c.4", "criteria c.5",
+   "criteria d", "criteria e", "criteria f"]
+
+  Example summary CSV entry:
+  probably no,probably no,probably yes,probably yes,probably no,na,probably yes,probably yes,probably yes,definitely yes
+
+  Important:
+  - Return one row only, comma-separated.
+  - Exactly 10 values in the order listed above.
+  - Each sub-criterion (c.1-c.5) must have its own value.
+  - If unsure or no information is available, write "na".
+  - Never add or remove columns.
+  - Never merge multiple values into one field.
