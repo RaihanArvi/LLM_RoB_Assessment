@@ -3,6 +3,7 @@ import csv
 import time
 import yaml
 import logging
+import tiktoken
 from openai import OpenAI
 from typing import List
 from pydantic import BaseModel
@@ -22,6 +23,9 @@ client = OpenAI(api_key=apikey)
 model_name = config.get("model", "gpt-4o")  # default gpt-4o
 mode = config.get("mode", "one_by_one")  # default to one_by_one
 model_temperature = config["temperature"]
+
+# Set tiktoken
+enc = tiktoken.encoding_for_model(model_name)
 
 # Between paper sleep time in seconds
 sleep_time = config.get("SleepTime", 0.5)
@@ -88,6 +92,7 @@ def process_plain_text():
     assessment_summary: List[List[str]] = [summary_header]
 
     pdfs_count = len(os.listdir(plain_text_input_folder))
+    tokens_all_paper = 0
     for i, file_name in enumerate(sorted(os.listdir(plain_text_input_folder))):
         print(f"Processing plain text: File {i + 1}/{pdfs_count}. Filename: {file_name}")
 
@@ -99,6 +104,8 @@ def process_plain_text():
 
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
         try:
+            input_prompt_tokens = len(enc.encode(f"{prompt_body} || {document}"))
+            print(f"Input Tokens: {str(input_prompt_tokens)}")
             structured_response = call_openai_response_api_plain_text_input(prompt_body, document)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
@@ -111,6 +118,13 @@ def process_plain_text():
                        f"{structured_response.overall_risk}"
                        f"\n{structured_response.explanation}")
 
+        # token
+        responses_tokens = len(enc.encode(f"{note_entry}+{structured_response.summary})"))
+        total_tokens = input_prompt_tokens+responses_tokens
+        tokens_all_paper+=total_tokens
+        print(f"Responses Tokens: {str(responses_tokens)}")
+        print(f"Total Tokens: {str(total_tokens)}")
+
         assessment_notes.append(note_entry)
         summary_row = structured_response.summary.split(",")  # this is output from llm.
         full_row = [str(i + 1), file_name, structured_response.title] + summary_row
@@ -118,6 +132,7 @@ def process_plain_text():
         time.sleep(sleep_time)  # prevent TPM rate limit error, in second.
 
     print("Processed " + str(pdfs_count) + " papers.")
+    print("Consumed "+str(tokens_all_paper) +" for "+str(pdfs_count)+" papers.")
     # Save outputs
     save_outputs(assessment_notes, assessment_summary)
 
@@ -135,6 +150,7 @@ def process_pdf_stored_in_cloud(file_dict):
     assessment_summary: List[List[str]] = [summary_header]
 
     pdfs_count = len(file_dict.keys())
+    tokens_all_paper = 0
     for i, file_name in enumerate(sorted(file_dict.keys())):  # sorted in ascending order.
         print(f"Processing pdf file: File {i + 1}/{pdfs_count}. Filename: {file_name}")
         file_id = file_dict[file_name]
@@ -143,6 +159,8 @@ def process_pdf_stored_in_cloud(file_dict):
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
 
         try:
+            input_prompt_tokens = len(enc.encode(prompt_body))
+            print(f"Input Tokens (prompt only, no parsed document): {str(input_prompt_tokens)}")
             structured_response = call_openai_response_api_file_upload(prompt_body, file_id)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
@@ -155,6 +173,13 @@ def process_pdf_stored_in_cloud(file_dict):
                        f"{structured_response.overall_risk}"
                        f"\n{structured_response.explanation}")
 
+        # token
+        responses_tokens = len(enc.encode(f"{note_entry}+{structured_response.summary})"))
+        total_tokens = input_prompt_tokens+responses_tokens
+        tokens_all_paper += total_tokens
+        print(f"Responses Tokens: {str(responses_tokens)}")
+        print(f"Total Tokens: {str(total_tokens)}")
+
         assessment_notes.append(note_entry)
         summary_row = structured_response.summary.split(",")  # this is output from llm.
         full_row = [str(i + 1), file_name, structured_response.title] + summary_row
@@ -162,6 +187,7 @@ def process_pdf_stored_in_cloud(file_dict):
         time.sleep(sleep_time)  # prevent TPM rate limit error, in second.
 
     print("Processed " + str(pdfs_count) + " papers.")
+    print("Consumed " + str(tokens_all_paper) + " for " + str(pdfs_count) + " papers.")
     # Save outputs
     save_outputs(assessment_notes, assessment_summary)
 
