@@ -5,7 +5,7 @@ temperature: 0.5
 SleepTime: 0.5 # sleep time between paper (in seconds), to prevent TPM rate limit.
 
 # Prompt
-prompt_file_path: "prompt_use.yaml"
+prompt_file_path: "prompt.yaml"
 
 # CSV Entry Predefined Header
 CSVEntryHeader: "no, file_name, title, criteria a, criteria b, criteria c.1, criteria c.2, criteria c.3, criteria c.4, criteria c.5, criteria d, criteria e, criteria f"

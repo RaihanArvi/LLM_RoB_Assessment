@@ -4,10 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e04e446d-6074-4452-83b3-04fe2b73f219" name="Changes" comment="">
+    <list default="true" id="e04e446d-6074-4452-83b3-04fe2b73f219" name="Changes" comment="added token encoder:&#10;- for each paper (input, responses, total per paper)&#10;- total tokens for all papers.&#10;&#10;this is for both pdf and markdown input.">
+      <change afterPath="$PROJECT_DIR$/RoBAssessment/AllCriteria.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RoBAssessment/Assessment.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/RoBAssessment/PerCriteria.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rob_assessment.py" beforeDir="false" afterPath="$PROJECT_DIR$/rob_assessment.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/config.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui/gui.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rob_assessment.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/rob_assessment_cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/RoB_Assessment_CLI.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,17 +43,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/raihanarvi/LLM_RoB_Assessment",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/raihanarvi/LLM_RoB_Assessment&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/module" />
       <recent name="E:\LLM_RoB_Assessment\ui" />
     </key>
   </component>
@@ -66,6 +74,19 @@
       <option name="presentableId" value="Default" />
       <updated>1752217911373</updated>
     </task>
+    <task id="LOCAL-00001" summary="added token encoder:&#10;- for each paper (input, responses, total per paper)&#10;- total tokens for all papers.&#10;&#10;this is for both pdf and markdown input.">
+      <option name="closed" value="true" />
+      <created>1755041875087</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1755041875087</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="added token encoder:&#10;- for each paper (input, responses, total per paper)&#10;- total tokens for all papers.&#10;&#10;this is for both pdf and markdown input." />
+    <option name="LAST_COMMIT_MESSAGE" value="added token encoder:&#10;- for each paper (input, responses, total per paper)&#10;- total tokens for all papers.&#10;&#10;this is for both pdf and markdown input." />
   </component>
 </project>
