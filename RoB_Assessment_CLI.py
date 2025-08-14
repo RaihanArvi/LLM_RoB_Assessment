@@ -5,7 +5,7 @@ from RoBAssessment import PerCriteria
 def main_menu():
     while True:
         splash_screen()
-        print("Main Menu:")
+        print("Main Menu")
         print("Choose Assessment Mode:")
         print("[1] Assess Criteria one-by-one per Paper")
         print("[2] Assess All Criteria per Paper")
@@ -23,7 +23,7 @@ def main_menu():
             print("Invalid choice. Try again.")
 def all_criteria_mode():
     while True:
-        splash_screen()
+        print("All Criteria Mode")
         print("Choose Input Option:")
         print("[1] PDF Input")
         print("[2] Plain Text Input")
@@ -42,7 +42,7 @@ def all_criteria_mode():
 
 def per_criteria_mode():
     while True:
-        splash_screen()
+        print("Per Criteria Mode")
         print("Choose Input Option:")
         print("[1] PDF Input")
         print("[2] Plain Text Input")

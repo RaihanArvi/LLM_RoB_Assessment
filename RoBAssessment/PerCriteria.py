@@ -1,4 +1,4 @@
-import Assessment as assess
+from RoBAssessment import Assessment as assess
 import os
 import time
 from typing import List

@@ -11,7 +11,7 @@ using the OpenAI API, based on a protocol spreadsheet, and output a CSV.
 """
 
 # Load configuration from config.yaml
-with open("../config.yaml", "r") as config_file:
+with open("config.yaml", "r") as config_file:
     config = yaml.safe_load(config_file)
 
 # Set OpenAI API key and model
