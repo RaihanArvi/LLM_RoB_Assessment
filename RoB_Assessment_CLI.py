@@ -27,15 +27,14 @@ def all_criteria_mode():
         print("Choose Input Option:")
         print("[1] PDF Input")
         print("[2] Plain Text Input")
-        print("[q] Quit")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
             all_criteria_pdf_input_menu()
         elif choice == "2":
             all_criteria_plain_text_menu()
-        elif choice.lower() == "q":
-            print("Exiting...")
+        elif choice.lower() == "b":
             break
         else:
             print("Invalid choice. Try again.")
@@ -46,15 +45,14 @@ def per_criteria_mode():
         print("Choose Input Option:")
         print("[1] PDF Input")
         print("[2] Plain Text Input")
-        print("[q] Quit")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
             per_criteria_pdf_input_menu()
         elif choice == "2":
             per_criteria_plain_text_menu()
-        elif choice.lower() == "q":
-            print("Exiting...")
+        elif choice.lower() == "b":
             break
         else:
             print("Invalid choice. Try again.")
@@ -67,7 +65,7 @@ def all_criteria_pdf_input_menu():
         print("[2] Start assessment using Stored Files")
         print("[3] Get Number of All Stored Files")
         print("[4] Delete All Stored Files")
-        print("[b] Back to Main Menu")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -94,7 +92,7 @@ def all_criteria_plain_text_menu():
     while True:
         print("\nStart plain text assessment?")
         print("[1] Start")
-        print("[b] Back to Main Menu")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -114,7 +112,7 @@ def per_criteria_pdf_input_menu():
         print("[2] Start assessment using Stored Files")
         print("[3] Get Number of All Stored Files")
         print("[4] Delete All Stored Files")
-        print("[b] Back to Main Menu")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -141,7 +139,7 @@ def per_criteria_plain_text_menu():
     while True:
         print("\nStart plain text assessment?")
         print("[1] Start")
-        print("[b] Back to Main Menu")
+        print("[b] Previous Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
