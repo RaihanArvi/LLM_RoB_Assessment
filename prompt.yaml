@@ -1,36 +1,190 @@
 Intro: |
-  You are an expert in risk of bias assessment...
+  You are a systematic reviewer who is an expert in risk of bias assessment of papers in environmental policies. You are particularly good at learning evaluation criteria, and closely following it to assess the risk of bias of climate and energy studies. 
+  
+  You can fully understand and follow the evaluation guidelines and evaluate the studies I have provided to you. Make sure all your judgments are based on the facts reported in the article and not on any extrapolation or speculation of your own.
+  ## Guidelines for Evaluation:
+  
+  **Note:** The examples provided do not cover all possible scenarios in real-world applications. So, use your expert judgment to evaluate each item based on the information provided in the study, and do not rely solely on the examples.
+  
+  ### Important:
+  - If there is too little information to support the judgment, do not speculate positively.
+  - Reply with **ONLY** one of **yes** or **no**. You provide reasoning behind each decision.
+
+
 
 Criteria:
-  a: |
-    Evaluate selection bias.
-  b: |
-    Evaluate blinding.
+  a.1: |
+    ### Confounder Possibility:
+    Could any variable that is not appropriately controlled affect both the assignment (or uptake) of the intervention and the outcome?
+    Consider the following:
+    - Some examples of confounders are Electricity use, Energy prices, Environmental attitudes, HH variables (e.g. Age, Gender, education level, income), Residence variables (e.g. Location, Size, Ownership; Seasonality etc.), Weather etc.
+    - If the intervention was implemented only by self-selected partner organizations, agencies, utilities, or regions, respond with **yes**.
+    - If statistically significant differences existed in pretreatment variables between control and treatment group(s), then respond with **no**.
+    - If there are any structural, organizational, or contextual factors that affect both participation in the intervention and the outcome, respond **yes**.
+    - If randomization occurred within units (e.g., within utilities), but the units themselves were not randomly selected, respond with **yes**.
+    ###
+  a.2: |
+    ### Confounder All: 
+    Did the authors control for all the potential confounders?
+    Consider the following:
+    - If any potential confounder was unmeasured, unadjusted, or found irrelevant but plausibly related to the outcome, respond **no**.
+    - If all potential confounders were measured, respond **yes**.
+    ###
+  a.3: |
+    Confounder Justified Omission: 
+    Is there any justifiable reason for not controlling for all the potential confounders (so that omission of some of the potential confounders is unlikely to influence the assessment of the effectiveness or impact)? 
+    Consider the following:
+    - If there is ANY justification for the omission of confounders, select **yes**.
+    - Select **yes** when there is evidence that omission of some of the potential confounders does not affect the assessment of effectiveness or impact.
+    - If DiD, or fixed effects were properly used and explained, select **yes**.
+    - If adjusting all potential confounders lead to overadjustment, then select **yes**.
+    - If all the potential confounders have already been taken into account, no justification for omission is required and hence respond with **no**.
+    - Is an instrumental variable used for estimating the impact? (based on the CEE CAT tool (E.g., select **yes** when there is evidence that omission of some of the potential confounders does not affect the assessment of effectiveness or impact. This may be the case if adjusting all potential confounders will lead to overadjustment, or an ‘instrumental variable’ is used for estimating the effectiveness or impact, etc. Instrumental variable is a variable that (1) is not associated with the confounder(s), (2) is associated with the intervention/exposure but (3) does not directly influence the outcome. If used appropriately, it enables valid estimation.)
+    ###
+  a.4: |
+    ### Confounder Accuracy:
+    Were the potential confounders, that were controlled for, (and/or the instrumental variable used if applicable) likely to be measured accurately and precisely enough?
+    Consider the following:
+    - Measurements of factors may be nominal (categorical), ordinal (ranks) or scale.
+    - Only answer "No" if confounders were mostly self-reported and no modeling or design compensates for this. Otherwise, answer "Yes".
+    ###
+  a.5: |
+    ### Confounder Analysis: 
+    Did the author(s) analyse the effect appropriately by taking into account the potential confounders, as well as the issue of accuracy and precision of the measurements of the potential confounders (and the instrumental variable if applicable)? 
+    Consider the following:
+    - If the study use stratification of the sample, respond with **yes**.
+    - If the study use matching of the sample, respond with **yes**.
+    - If the study use inverse probability weighting, respond with **yes**.
+    - If the study use standardisation, respond with **yes**.
+    - If the study use G-estimation, respond with **yes**.
+    - If the study use Instrumental variable estimation, respond with **yes**.
+    - If the regression models with fixed effects are utilised to mitigate confounding effects, respond with **yes**.
+    - If the study mentions control group and treatment group are similar, respond with **yes**.
+    - If the study appropriately controls for confounders like Electricity use, Energy prices, Environmental attitudes,  HH variables (e.g. Age, Gender, education level, income), Residence variables (e.g. Location, Size, Ownership etc.) Seasonality, Weather etc respond **yes**.
+    - If no appropriate attempts were taken to control for biasing factors, respond with **no**.
+    ###
+  b.1: |
+    ### Sample Exchangeability:
+    Was the selection of subjects or areas after intervention or exposure random or systematic (i.e., based on random or systematic sampling), and exchangeability between groups could be assumed based on the selection approach?
+    Consider the following:
+    - Respond **Yes** if subjects or areas were randomly assigned to treatment and control groups after the intervention or exposure was defined.
+    - Respond **No** if there was no indication of random or systematic sampling to ensure group comparability.
+    - Respond **No** if the allocation to groups was based on self-selection, voluntary participation without randomization, or other potentially biased processes.
+    ###
+  b.2: |
+    ### Sample Exclusion: 
+    After the start of the intervention/exposure or during the analysis, were any subjects or areas excluded or lost from the study or analysis?
+    Consider the following:
+    - If the final participated sample is lower than the total potential participation sample, then respond with **Yes**.
+    - If subjects exclusion was not mentioned, then respond with **No**.
+    ###
+  b.3: |
+    ### Sample Group Comparability: 
+    Were the subjects or areas included in the study (or analysis) comparable between groups and so they allowed a valid comparison to be made (i.e., exchangeability or conditional exchangeability between groups could be assumed)?
+    Consider the following:
+    - If the characteristics of the control and the intervention groups were similar before treatment (ie. samples are homogenous), then respond with **Yes**.
+    - If statistically significant differences existed in pretreatment variables between control and treatment group(s), then respond with **No**.
+    - If there is no statistically significant differences in pretreatment variables between the treatment and control groups, then respond with **Yes**.
+    - If there are differences in the process used to select control and treatment groups, then respond with **No**.
+    ###
+  b.4: |
+    ### Sample Group Difference Intervention:
+    Were the difference(s) between groups likely to be explained by the intervention/exposure or a variable influenced by the intervention/exposure (including the outcome)?
+    Consider the following:
+    - If statistical tests shown that there weren't any differences between the control and treatment groups before intervention, then respond with **Yes**.
+    - If the study used a robust design or analytic method to isolate the causal impact of the intervention—such as regression discontinuity, instrumental variables, or natural experiments based on exogenous variation—then respond with Yes.
+    - If the difference in the outcome could be due to **BOTH** intervention **AND** pre-existing differences, then respond with **Yes**.
+    ###
+  b.5: |
+    ### Sample Bias Adjustment:
+    Did the author(s) adjust for the potential post- intervention/exposure selection bias in an appropriate way? 
+    Post-intervention/exposure selection bias occurs when, after the intervention is implemented, the subjects (e.g., households, communities, monitoring sites) or areas included in the follow-up analysis differ systematically between treatment and control groups in ways that can influence the estimated policy effect.
+    Consider the following:
+    - Did the authors describe any action to address changes in the sample after the intervention started (e.g., handling movers, dropouts, or missing data)?
+    - Did the authors mention any analysis that could reduce bias from post-intervention changes (e.g., robustness checks, sensitivity tests, subgroup analysis, excluding or including certain units)?
+    - Did the authors use any statistical method that could plausibly address Post-intervention/exposure selection bias(e.g., regression with controls, Difference-in-Differences, fixed effects, selection models, inverse probability weighting, multiple imputation)?
+    - Did they indicate that follow-up or data collection was consistent across groups and losses were minimal or balanced?
+    - Respond **yes** if any question above is answered "Yes".
+    - Respond **no** ONLY if all the questions above is answered "No".
+    ###
   c: |
-    Evaluate outcome reporting.
+    ### Aware of Study: 
+    Was there any way for the outcome measure to be affected by knowledge of the exposure, intervention, subjects or areas, or desire for certain outcome?
+    Consider the following:
+    - Were participants aware they were part of a study, intervention, or being observed? Could this awareness plausibly influence the outcome behavior, even if the outcome was measured objectively?
+    - Did the study involve behaviorally reactive interventions (e.g., feedback, monitoring, incentives) likely to amplify awareness?
+    -  If participants were aware of the study or they voluntarily enrolled for the experiment, respond **yes**.
+    - If there is no indication that outcome measure is affected by knowledge of the exposure, intervention, subjects or areas, or desire for certain outcome, then respond with **no**.
+    ###
+  d.1: |
+    ### Data Selective: 
+    Are the reported effect estimate likely to only represent a part of measurements of the outcome, i.e. only a part of measured outcomes is reported. E.g., only 80 measured outcomes are reported when there are 100, or the effect estimate is based on 80 measured outcomes when there are 100. 
+    Consider the following:
+    - Did the authors not report any non-significant results or no/small effects? 
+    - Are there are discrepancies between predefined hypotheses and methods and ones reported after studies are conducted?
+    - Is there selective disclosure of findings from multiple measurements?
+    - Is there selective disclosure of findings from multiple subgroups or subpopulations?
+    - If the study does not provide sufficient information indicating that all measured outcomes were reported, respond **yes**. Otherwise, respond **no**.
+    ###
+  d.2: |
+    ### Data Subgroups:
+    Are relevant outcome data likely to be unreported for some subgroup(s)? I.e., only outcome data on certain subjects or areas with certain characteristic(s) (e.g., taxonomic group) or in certain conditions (e.g., intervention intensity) are available.
+    Consider the following:
+    - Is there selective disclosure of findings from multiple subgroups or subpopulations?
+    - If the study does not provide sufficient information indicating that all relevant outcome data of every subgroup was reported, respond **yes**. Otherwise, respond **no**.
+    ###
+
+  d.3: |
+    ### Data Causal:
+    Is/are the analysis/analyses of the causal relationship of interest (intervention-outcome or exposure-outcome) likely to be partially reported?  I.e., there is/are other relevant analysis/analyses of the causal relationship that is/are not reported.
+    Consider the following:
+    - Selective disclosure of findings from multiple analyses.
+    - If the study does not provide sufficient information indicating that all the analyses of the causal relationship of interest have been taken into account, respond **yes**. Otherwise, respond **no**.
+    ###
+  e.1: |
+    ### Stats Recording:
+    Was/were the person(s), who estimated the effectiveness of the intervention or the impact of the exposure, aware of the exposure or intervention received by subjects or areas?
+    Consider the following:
+    - If the energy or electricity consumption are measured by meters rather than individuals who are aware of the intervention, then answer **no**.
+    - If the individuals estimating the effectiveness of the intervention were aware of the exposure or intervention received by the subjects, then answer **yes**.
+    - If the analysis and interpretation of the data were conducted by researchers who were aware of the intervention, then answer **yes**.
+    ###
+    
+  e.2: |
+    ### Stats Descriptive Error:
+    Is it likely that there is/are error(s) or inappropriate methods in the applied descriptive statistical analyses?
+    Consider the following:
+    - Respond **yes** if the study uses inappropriate statistical methods (e.g., using a paired-sample t-test with very small sample sizes), applies inconsistent significance levels or confidence intervals, or acknowledges analysis limitations that impact the reliability of results.
+    - Respond **yes** if the study is unable to conduct necessary statistical tests (e.g., tests for fixed or random effects) due to structural data limitations.
+    - Respond **no** if the descriptive and statistical methods are appropriately chosen, clearly described, and justified based on the study design and data structure (e.g., use of probit regression for attrition or econometric methods with documented data).
+    - If insufficient information is available to assess the appropriateness of the descriptive statistical methods, respond **no**.
+  e.3: |
+    ### Stats Inferential Error:
+    Is it likely that there is/are error(s) in the applied inferential statistics (including null hypothesis testing, estimation, coding)? 
+    Consider the following:
+    - Are there any errors in null hypothesis testing?
+    - Are there any errors in estimation?
+    - Are there any errors in coding?
+    - Were different significance levels and confidence intervals used in the same study?
+    - Given the design and sample size, are the chosen tests justified with assumption checks (normality of paired differences, independence), a single pre-specified α/CI, or robust alternatives when assumptions/small n apply?
+    - Respond **yes**  if there are any errors, and **no** if there are no errors.
+    ###
+    
+  e.4: |
+    ### Stats Inferential Violation:
+    Were assumptions for the applied inferential statistics violated or the applied inferential statistical methods inappropriate for the inferential goal(s)?
+    Consider the following:
+    - Were inappropriate sample sizes used to test the hypothesis?
+    - Was normality not assumed when conducting a parametric test?
+    - Were the equal or unequal variances not tested when testing for a difference?
+    - Was there no justification for the choice of dependent and independent variables?
+    - Was a Pearson’s correlation test used when analysing a causal relationship?
+    - Was there inappropriate comparison of multiple models to support the provided statement when some of the models do not relate to impact or effectiveness?
+    - Was there inappropriate modelling which may affect an estimate of effectiveness or impact?
+    - Was there any inappropriate choice of statistical tests?
+    - Was any criteria for normality and equal variances are not satisfied?
+    ###
+
 
 OutputFormat: |
-  # Output Format
   
-  ...
-  
-  
-  ### Summary Field
-  For each reported outcome in the RCT, provide the evaluation results in the following format for the "summary":
-
-  Only return a CSV entry with exactly the following columns, all lowercase:
-
-  ["criteria a", "criteria b",
-   "criteria c.1", "criteria c.2", "criteria c.3", "criteria c.4", "criteria c.5",
-   "criteria d", "criteria e", "criteria f"]
-
-  Example summary CSV entry:
-  probably no,probably no,probably yes,probably yes,probably no,na,probably yes,probably yes,probably yes,definitely yes
-
-  Important:
-  - Return one row only, comma-separated.
-  - Exactly 10 values in the order listed above.
-  - Each sub-criterion (c.1-c.5) must have its own value.
-  - If unsure or no information is available, write "na".
-  - Never add or remove columns.
-  - Never merge multiple values into one field.

@@ -103,7 +103,6 @@ def all_criteria_plain_text_menu():
         else:
             print("Invalid choice. Try again.")
 
-
 ### Per Criteria ###
 def per_criteria_pdf_input_menu():
     while True:

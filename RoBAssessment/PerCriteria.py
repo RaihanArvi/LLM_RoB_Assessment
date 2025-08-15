@@ -13,8 +13,8 @@ class AssessmentResultPerCriteria(BaseModel):
     criteria: str
     """This corresponds to the name of the criteria assessed."""
     result: str
-    """The overall decision for this item. Respond only with ['Yes', 'No']."""
-    explanation: float
+    """The overall decision for this item. Respond only with one of ['yes', 'no']."""
+    explanation: str
     """A detailed reasoning that supports the decision, based on evidence from the document."""
 
 ### Methods ###
@@ -31,31 +31,34 @@ def process_plain_text():
     assessment_summary: List[List[str]] = [assess.summary_header]
 
     # token counter for all papers.
-    tokens_all_paper = 0
+    tokens_all_papers = 0
 
     # Loop for one paper.
-    pdfs_count = len(os.listdir(assess.plain_text_input_folder))
-    for i, file_name in enumerate(sorted(os.listdir(assess.plain_text_input_folder))):
-        print(f"Processing plain text: File {i + 1}/{pdfs_count}. Filename: {file_name}")
+    # Get only .txt and .md files
+    plain_text_files = [
+        f for f in sorted(os.listdir(assess.plain_text_input_folder))
+        if f.lower().endswith((".txt", ".md"))
+    ]
+    pdfs_count = len(plain_text_files)
+    for i, file_name in enumerate(plain_text_files):
+        assess.print_and_log(f"Processing plain text: File {i + 1}/{pdfs_count}. Filename: {file_name}")
 
         # Initialize note.
         note_entry = ""
         note_entry += (f"\n=== Paper {i + 1}: {file_name} ===\n")
         csv_entry = ""
 
+        # token counter for this paper.
+        tokens_this_paper = 0
+
         # Open markdown file.
         with open(os.path.join(assess.plain_text_input_folder, file_name), "r", encoding="utf-8") as f:
             document = f.read()
-
-        # Token counter for one paper.
-        tokens_this_paper = 0
 
         # Loop over criterion.
         list_of_sub_criteria_keys = list(assess.criteria.keys())
         for sub_criteria in list_of_sub_criteria_keys:
             sub_criteria_prompt = assess.criteria[sub_criteria]
-
-            tokens_this_paper += len(assess.enc.encode(f"{assess.intro_message}+{sub_criteria_prompt}+{document}"))
 
             try:
                 structured_response = call_openai_response_api_plain_text_input(sub_criteria_prompt, document,
@@ -63,26 +66,28 @@ def process_plain_text():
             except Exception as e:
                 exception = f"Error: {e}. Error prccessing {file_name}"
                 note_entry += f"\n{exception}\n"
-                print(f"Processing Error. Exception: {exception}")
+                assess.print_and_log(f"Processing Error. Exception: {exception}")
                 continue
 
             # Reasoning field.
-            note_entry += (f"\n{structured_response.criteria} = {structured_response.result}\n"
-                           f"\n{structured_response.explanation}\n")
+            note_entry += (f"\n{structured_response.output_parsed.criteria} = {structured_response.output_parsed.result}\n"
+                           f"\n{structured_response.output_parsed.explanation}\n")
             # Append csv entry.
-            csv_entry += (f"{structured_response.result},") # comma at the end.
+            csv_entry += (f"{structured_response.output_parsed.result},") # comma at the end.
+
             # Responses tokens.
-            tokens_this_paper += len(assess.enc.encode(f"{note_entry}+{csv_entry}"))
-            tokens_all_paper += tokens_this_paper
+            tokens_this_paper += structured_response.usage.total_tokens
             time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
-        print(f"This paper consumer approximately {tokens_this_paper} tokens.")
+        assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
+        tokens_all_papers += tokens_this_paper
+
         assessment_notes.append(note_entry)
         full_row = [str(i + 1), file_name] + [p for p in csv_entry.split(",") if p]
         assessment_summary.append(full_row)
 
-    print("Processed " + str(pdfs_count) + " papers.")
-    print("Consumed "+str(tokens_all_paper) +" tokens for "+str(pdfs_count)+" papers.")
+    assess.print_and_log("Processed " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Consumed "+str(tokens_all_papers) +" tokens for "+str(pdfs_count)+" papers.")
     # Save outputs
     assess.save_outputs(assessment_notes, assessment_summary)
 
@@ -99,60 +104,53 @@ def process_pdf_stored_in_cloud(file_dict):
     assessment_summary: List[List[str]] = [assess.summary_header]
 
     # Initialize token counter for all papers.
-    tokens_all_paper = 0
+    tokens_all_papers = 0
 
     pdfs_count = len(file_dict.keys())
     for i, file_name in enumerate(sorted(file_dict.keys())):  # sorted in ascending order.
-        print(f"Processing pdf file: File {i + 1}/{pdfs_count}. Filename: {file_name}")
+        assess.print_and_log(f"Processing pdf file: File {i + 1}/{pdfs_count}. Filename: {file_name}")
         file_id = file_dict[file_name]
 
         note_entry = ""
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
         csv_entry = ""
 
-        # Token counter for one paper.
+        # tokens for this paper
         tokens_this_paper = 0
 
         # Loop over criterion.
         list_of_sub_criteria_keys = list(assess.criteria.keys())
         for sub_criteria in list_of_sub_criteria_keys:
             sub_criteria_prompt = assess.criteria[sub_criteria]
-            #tokens_this_paper += len(assess.enc.encode(f"{assess.intro_message}+{sub_criteria_prompt}+{document}"))
 
             try:
-                #input_prompt_tokens = len(enc.encode(prompt_body))
-                #print(f"Input Tokens (prompt only, no parsed document): {str(input_prompt_tokens)}")
                 structured_response = call_openai_response_api_file_upload(sub_criteria_prompt,
                                                                            file_id, AssessmentResultPerCriteria)
             except Exception as e:
                 exception = f"Error: {e}. Error prccessing {file_name}"
                 note_entry += f"\n{exception}\n"
-                print(f"Processing Error. Exception: {exception}")
+                assess.print_and_log(f"Processing Error. Exception: {exception}")
                 continue
 
             # Reasoning field.
-            note_entry += (f"\n{structured_response.criteria} = {structured_response.result}\n"
-                           f"\n{structured_response.explanation}\n")
+            note_entry += (f"\n{structured_response.output_parsed.criteria} = {structured_response.output_parsed.result}\n"
+                           f"\n{structured_response.output_parsed.explanation}\n")
             # Append csv entry.
-            csv_entry += (f"{structured_response.result},")  # comma at the end.
+            csv_entry += (f"{structured_response.output_parsed.result},")  # comma at the end.
             # Responses tokens.
-            #tokens_this_paper += len(assess.enc.encode(f"{note_entry}+{csv_entry}"))
-            #tokens_all_paper += tokens_this_paper
+            tokens_this_paper += structured_response.usage.total_tokens
+
             time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
-        # token
-        #responses_tokens = len(enc.encode(f"{note_entry}+{structured_response.summary})"))
-        #total_tokens = input_prompt_tokens+responses_tokens
-        #tokens_all_paper += total_tokens
-        #print(f"Responses Tokens: {str(responses_tokens)}")
-        #print(f"Total Tokens: {str(total_tokens)}")
+        assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
+        tokens_all_papers += tokens_this_paper
 
         assessment_notes.append(note_entry)
         full_row = [str(i + 1), file_name] + [p for p in csv_entry.split(",") if p]
         assessment_summary.append(full_row)
 
-    print("Processed " + str(pdfs_count) + " papers.")
-    #print("Consumed " + str(tokens_all_paper) + " for " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Processed " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Consumed " + str(tokens_all_papers) + " for " + str(pdfs_count) + " papers.")
     # Save outputs
     assess.save_outputs(assessment_notes, assessment_summary)
 
@@ -184,7 +182,7 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
         ],
         text_format=output_format,
     )
-    return response.output_parsed
+    return response
 
 def call_openai_response_api_file_upload(messages, file_id, output_format):
     """
@@ -214,4 +212,4 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
         text_format=output_format,
     )
 
-    return response.output_parsed
+    return response

@@ -11,9 +11,9 @@ class AssessmentResult(BaseModel):
     Each field requires explanation to guide the LLM in output generation.
     """
     title: str
-    """"""
+    """String of the title of the study."""
     authors: str
-    """"""
+    """Authors of the study."""
     explanation: str
     """"""
     summary: str
@@ -32,10 +32,17 @@ def process_plain_text():
     assessment_notes.append("Assessing Plain Files Locally.")
     assessment_summary: List[List[str]] = [assess.summary_header]
 
-    pdfs_count = len(os.listdir(assess.plain_text_input_folder))
-    tokens_all_paper = 0
-    for i, file_name in enumerate(sorted(os.listdir(assess.plain_text_input_folder))):
-        print(f"Processing plain text: File {i + 1}/{pdfs_count}. Filename: {file_name}")
+    # tokens
+    tokens_all_papers = 0
+
+    # Get only .txt and .md files
+    plain_text_files = [
+        f for f in sorted(os.listdir(assess.plain_text_input_folder))
+        if f.lower().endswith((".txt", ".md"))
+    ]
+    pdfs_count = len(plain_text_files)
+    for i, file_name in enumerate(plain_text_files):
+        assess.print_and_log(f"Processing plain text: File {i + 1}/{pdfs_count}. Filename: {file_name}")
 
         note_entry = ""
 
@@ -45,34 +52,30 @@ def process_plain_text():
 
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
         try:
-            input_prompt_tokens = len(assess.enc.encode(f"{assess.prompt_body} || {document}"))
-            print(f"Input Tokens: {str(input_prompt_tokens)}")
             structured_response = call_openai_response_api_plain_text_input(assess.prompt_body, document, AssessmentResult)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
             note_entry += f"\n{exception}\n"
-            print(f"Processing Error. Exception: {exception}")
+            assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\n{structured_response.title}\n"
-                       f"{structured_response.authors}\n"
-                       f"\n{structured_response.explanation}")
+        note_entry += (f"\n{structured_response.output_parsed.title}\n"
+                       f"{structured_response.output_parsed.authors}\n"
+                       f"\n{structured_response.output_parsed.explanation}")
 
         # token
-        responses_tokens = len(assess.enc.encode(f"{note_entry}+{structured_response.summary})"))
-        total_tokens = input_prompt_tokens+responses_tokens
-        tokens_all_paper+=total_tokens
-        print(f"Responses Tokens: {str(responses_tokens)}")
-        print(f"Total Tokens: {str(total_tokens)}")
+        tokens_this_paper = structured_response.usage.total_tokens
+        tokens_all_papers += tokens_this_paper
+        assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
 
         assessment_notes.append(note_entry)
-        summary_row = structured_response.summary.split(",")  # this is output from llm.
-        full_row = [str(i + 1), file_name, structured_response.title] + summary_row
+        summary_row = structured_response.output_parsed.summary.split(",")  # this is output from llm.
+        full_row = [str(i + 1), file_name] + summary_row
         assessment_summary.append(full_row)
         time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
-    print("Processed " + str(pdfs_count) + " papers.")
-    print("Consumed "+str(tokens_all_paper) +" for "+str(pdfs_count)+" papers.")
+    assess.print_and_log("Processed " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Consumed "+str(tokens_all_papers) +" for "+str(pdfs_count)+" papers.")
     # Save outputs
     assess.save_outputs(assessment_notes, assessment_summary)
 
@@ -88,45 +91,42 @@ def process_pdf_stored_in_cloud(file_dict):
     assessment_notes.append("Assessing PDFs Stored in Cloud.")
     assessment_summary: List[List[str]] = [assess.summary_header]
 
+    # tokens.
+    tokens_all_papers = 0
+
     pdfs_count = len(file_dict.keys())
-    tokens_all_paper = 0
     for i, file_name in enumerate(sorted(file_dict.keys())):  # sorted in ascending order.
-        print(f"Processing pdf file: File {i + 1}/{pdfs_count}. Filename: {file_name}")
+        assess.print_and_log(f"Processing pdf file: File {i + 1}/{pdfs_count}. Filename: {file_name}")
         file_id = file_dict[file_name]
 
         note_entry = ""
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
 
         try:
-            input_prompt_tokens = len(assess.enc.encode(assess.prompt_body))
-            print(f"Input Tokens (prompt only, no parsed document): {str(input_prompt_tokens)}")
             structured_response = call_openai_response_api_file_upload(assess.prompt_body, file_id, AssessmentResult)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
             note_entry += f"\n{exception}\n"
-            print(f"Processing Error. Exception: {exception}")
+            assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\n{structured_response.title}\n"
-                       f"{structured_response.authors}\n"
-                       f"{structured_response.overall_risk}"
-                       f"\n{structured_response.explanation}")
+        note_entry += (f"\n{structured_response.output_parsed.title}\n"
+                       f"{structured_response.output_parsed.authors}\n"
+                       f"\n{structured_response.output_parsed.explanation}")
 
         # token
-        responses_tokens = len(assess.enc.encode(f"{note_entry}+{structured_response.summary})"))
-        total_tokens = input_prompt_tokens+responses_tokens
-        tokens_all_paper += total_tokens
-        print(f"Responses Tokens: {str(responses_tokens)}")
-        print(f"Total Tokens: {str(total_tokens)}")
+        tokens_this_paper = structured_response.usage.total_tokens
+        tokens_all_papers += tokens_this_paper
+        assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
 
         assessment_notes.append(note_entry)
-        summary_row = structured_response.summary.split(",")  # this is output from llm.
-        full_row = [str(i + 1), file_name, structured_response.title] + summary_row
+        summary_row = structured_response.output_parsed.summary.split(",")  # this is output from llm.
+        full_row = [str(i + 1), file_name] + summary_row
         assessment_summary.append(full_row)
         time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
-    print("Processed " + str(pdfs_count) + " papers.")
-    print("Consumed " + str(tokens_all_paper) + " for " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Processed " + str(pdfs_count) + " papers.")
+    assess.print_and_log("Consumed " +str(tokens_all_papers) + " for " + str(pdfs_count) + " papers.")
     # Save outputs
     assess.save_outputs(assessment_notes, assessment_summary)
 
@@ -159,7 +159,7 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
         text_format=output_format,
     )
 
-    return response.output_parsed
+    return response
 
 def call_openai_response_api_plain_text_input(messages, document, output_format):
     """
@@ -189,4 +189,4 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
         text_format=output_format,
     )
 
-    return response.output_parsed
+    return response

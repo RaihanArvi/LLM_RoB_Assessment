@@ -1,16 +1,17 @@
 # OpenAI
 api_key: ""
 model: "gpt-4.1-mini"
-temperature: 0.5
-SleepTime: 0.5 # sleep time between paper (in seconds), to prevent TPM rate limit.
+temperature: 0.0
+SleepTime: 2 # sleep time between paper (in seconds), to prevent TPM rate limit.
 
 # Prompt
 prompt_file_path: "prompt.yaml"
 
 # CSV Entry Predefined Header
-CSVEntryHeader: "no, file_name, title, criteria a, criteria b, criteria c.1, criteria c.2, criteria c.3, criteria c.4, criteria c.5, criteria d, criteria e, criteria f"
+CSVEntryHeader: "no, file_name, criteria a, criteria b, criteria c.1, criteria c.2, criteria c.3, criteria c.4, criteria c.5, criteria d, criteria e, criteria f"
 
 # Input - Output
 pdf_input_files_folder: "pdf_papers"
 plain_text_input_files_folder: "markdown_files"
 output_files_folder: "output"
+logger_output_folder: "logs"
