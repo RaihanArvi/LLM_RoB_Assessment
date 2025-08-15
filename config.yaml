@@ -2,13 +2,13 @@
 api_key: ""
 model: "gpt-4.1-mini"
 temperature: 0.0
-SleepTime: 2 # sleep time between paper (in seconds), to prevent TPM rate limit.
+SleepTime: 1 # sleep time between paper (in seconds), to prevent TPM rate limit.
 
 # Prompt
 prompt_file_path: "prompt.yaml"
 
 # CSV Entry Predefined Header
-CSVEntryHeader: "no, file_name, criteria a, criteria b, criteria c.1, criteria c.2, criteria c.3, criteria c.4, criteria c.5, criteria d, criteria e, criteria f"
+CSVEntryHeader: "no, file_name, criteria a.1, criteria a.2, criteria a.3, criteria a.4, criteria a.5, criteria b.1, criteria b.2, criteria b.3, criteria b.4, criteria b.5, criteria c, criteria d.1, criteria d.2, criteria d.3, criteria e.1, criteria e.2, criteria e.3, criteria e.4"
 
 # Input - Output
 pdf_input_files_folder: "pdf_papers"
