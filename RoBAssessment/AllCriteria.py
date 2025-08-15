@@ -60,8 +60,8 @@ def process_plain_text():
             assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\n{structured_response.output_parsed.title}\n"
-                       f"{structured_response.output_parsed.authors}\n"
+        note_entry += (f"\nTitle: {structured_response.output_parsed.title}\n"
+                       f"Authors: {structured_response.output_parsed.authors}\n"
                        f"\n{structured_response.output_parsed.explanation}")
 
         # token
@@ -112,8 +112,8 @@ def process_pdf_stored_in_cloud(file_dict):
             assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\n{structured_response.output_parsed.title}\n"
-                       f"{structured_response.output_parsed.authors}\n"
+        note_entry += (f"\nTitle: {structured_response.output_parsed.title}\n"
+                       f"Authors: {structured_response.output_parsed.authors}\n"
                        f"\n{structured_response.output_parsed.explanation}")
 
         # token
