@@ -29,8 +29,9 @@ def process_plain_text():
     # Initialize output containers
     assessment_notes: List[str] = []
     assessment_notes.append(assess.notes_header)
-    assessment_notes.append("Assessing Plain Files Locally.")
+    assessment_notes.append("Assessing plain files locally. Assessing all criteria all at once per one paper.")
     assessment_summary: List[List[str]] = [assess.summary_header]
+    assess.print_and_log("Assessing plain files locally. Assessing all criteria all at once per one paper.")
 
     # tokens
     tokens_all_papers = 0
@@ -88,8 +89,9 @@ def process_pdf_stored_in_cloud(file_dict):
     # Initialize output containers
     assessment_notes: List[str] = []
     assessment_notes.append(assess.notes_header)
-    assessment_notes.append("Assessing PDFs Stored in Cloud.")
+    assessment_notes.append("Assessing PDFs stored in cloud.")
     assessment_summary: List[List[str]] = [assess.summary_header]
+    assess.print_and_log("Assessing PDFs stored in cloud.")
 
     # tokens.
     tokens_all_papers = 0

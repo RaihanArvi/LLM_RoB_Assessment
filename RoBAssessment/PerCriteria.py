@@ -27,8 +27,9 @@ def process_plain_text():
     # Initialize output containers
     assessment_notes: List[str] = []
     assessment_notes.append(assess.notes_header)
-    assessment_notes.append("Assessing Plain Files Locally.")
+    assessment_notes.append("Assessing plain files locally. Assessing one criteria at a time for one paper.")
     assessment_summary: List[List[str]] = [assess.summary_header]
+    assess.print_and_log("Assessing plain files locally. Assessing one criteria at a time for one paper.")
 
     # token counter for all papers.
     tokens_all_papers = 0
@@ -100,8 +101,9 @@ def process_pdf_stored_in_cloud(file_dict):
     # Initialize output containers
     assessment_notes: List[str] = []
     assessment_notes.append(assess.notes_header)
-    assessment_notes.append("Assessing Plain Files Locally.")
+    assessment_notes.append("Assessing PDFs stored in cloud. Assessing one criteria at a time for one paper.")
     assessment_summary: List[List[str]] = [assess.summary_header]
+    assess.print_and_log("Assessing PDFs stored in cloud. Assessing one criteria at a time for one paper.")
 
     # Initialize token counter for all papers.
     tokens_all_papers = 0
@@ -164,7 +166,7 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
     response = assess.client.responses.parse(
         model=assess.model_name,
         temperature=assess.model_temperature,
-        instructions=assess.intro_message,
+        instructions=assess.intro_prompt,
         input=[
             {
                 "role": "user",
@@ -193,7 +195,7 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
     response = assess.client.responses.parse(
         model=assess.model_name,
         temperature=assess.model_temperature,
-        instructions=assess.intro_message,
+        instructions=assess.intro_prompt,
         input=[
             {
                 "role": "user",
