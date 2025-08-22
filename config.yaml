@@ -13,7 +13,7 @@ RetryMaximum: 10
 prompt_file_path: "prompt.yaml"
 
 # CSV Entry Predefined Header
-CSVEntryHeader: "no, file_name, criteria a, criteria b, criteria c.1, criteria c.2, criteria c.3, criteria c.4, criteria c.5, criteria d, criteria e, criteria f"
+CSVEntryHeader: "no, file_name, criteria 1.1, criteria 1.2, criteria 1.3, criteria 1.4, criteria 1.5, criteria 2.1, criteria 2.3, criteria 2.4, criteria 2.5, criteria 2.6, criteria 5.1, criteria 6.1, criteria 6.2, criteria 6.3, criteria 7.1, criteria 7.2, criteria 7.3, criteria 7.4"
 
 # Input - Output
 pdf_input_files_folder: "pdf_papers"
