@@ -27,6 +27,11 @@ enc = tiktoken.encoding_for_model(model_name)
 # Between assessment sleep time in seconds
 sleep_time = config.get("SleepTime", 0.5)
 
+# exponential backoff
+retry_multiplier = config["RetryMultiplier"]
+retry_min = config["RetryMinimum"]
+retry_max = config["RetryMaximum"]
+
 # File and folder setup
 pdf_input_folder = config["pdf_input_files_folder"]
 plain_text_input_folder = config["plain_text_input_files_folder"]
