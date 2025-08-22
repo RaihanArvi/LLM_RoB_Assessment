@@ -137,6 +137,7 @@ def process_pdf_stored_in_cloud(file_dict):
 ### API Calls ###
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
        retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
 def call_openai_response_api_file_upload(messages, file_id, output_format):
     """
     Function to call OpenAI API (Structured Output), intended for files stored in OpenAI platform.
@@ -169,6 +170,7 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
 
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
        retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
 def call_openai_response_api_plain_text_input(messages, document, output_format):
     """
     Function to call OpenAI API (Structured Output), intended for files parsed locally.
