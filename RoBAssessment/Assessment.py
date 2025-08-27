@@ -46,9 +46,6 @@ with open(prompt_file, "r") as f:
 # Create output folder
 os.makedirs(output_folder, exist_ok=True)
 
-# Summary Header
-summary_header = config.get("CSVEntryHeader", "").split(", ")
-
 # Notes Header
 notes_header = r"""
   ___  ___________  _____       ______          _           _   
@@ -68,20 +65,42 @@ intro_prompt = script["Intro"]
 output_format_prompt = script["OutputFormat"]
 intro_message = intro_prompt + "\n" + output_format_prompt
 
-criteria = script["Criteria"]
+# Nested prompt structure.
+nested_subs = {
+    crit["id"]: {
+        sub["id"]: {
+            "title": sub.get("title", ""),
+            "explanation": sub.get("explanation", "")
+        }
+        for sub in crit.get("sub_criteria", [])
+    }
+    for crit in script.get("Criteria", [])
+}
 
-# Prompt main body.
-prompt_body = "\n".join(
-    criteria.values())  # combine all criteria, the old code line outputs dictionaries of the criteria.
+# for AllCriteria (all criteria joined):
+prompt_body = "\n\n".join(
+    sub["explanation"].rstrip()
+    for parent in nested_subs.values()
+    for sub in parent.values()
+    if sub["explanation"]
+)
+
+# Summary Header
+CSVEntryHeader = "no, file_name"
+for criteria_id, sub_crit_dict in nested_subs.items():
+    for sub_crit_id, sub_crit in sub_crit_dict.items():
+        # column_header = f", criteria {sub_crit_id}" # another option.
+        column_header = f", {sub_crit_id}) {sub_crit['title']}"
+        CSVEntryHeader = "".join([CSVEntryHeader, column_header])
+summary_header = CSVEntryHeader.split(", ")
 
 ### Logger ###
-
 t = time.localtime()
 start_system_time = time.strftime("%d-%m-%Y_%H:%M:%S", t)
 
-# File handler
+# File handler for logger.
 os.makedirs(logger_output_folder, exist_ok=True)
-# --- Setup logger ---
+# Setup logger.
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,

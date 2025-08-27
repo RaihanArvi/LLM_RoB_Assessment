@@ -12,10 +12,6 @@ class AssessmentResult(BaseModel):
     Output format for the risk-of-bias assessment.
     Each field requires explanation to guide the LLM in output generation.
     """
-    title: str
-    """String of the title of the study."""
-    authors: str
-    """Authors of the study."""
     explanation: str
     """"""
     summary: str
@@ -62,8 +58,7 @@ def process_plain_text():
             assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\nTitle: {structured_response.output_parsed.title}\n"
-                       f"Authors: {structured_response.output_parsed.authors}\n"
+        note_entry += (f"\nFile: {file_name}\n"
                        f"\n{structured_response.output_parsed.explanation}")
 
         # token
@@ -114,8 +109,7 @@ def process_pdf_stored_in_cloud(file_dict):
             assess.print_and_log(f"Processing Error. Exception: {exception}")
             continue
 
-        note_entry += (f"\nTitle: {structured_response.output_parsed.title}\n"
-                       f"Authors: {structured_response.output_parsed.authors}\n"
+        note_entry += (f"\nTitle: {file_name}\n"
                        f"\n{structured_response.output_parsed.explanation}")
 
         # token

@@ -1,8 +1,9 @@
+import json
 import os
 import time
 import openai
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from RoBAssessment import Assessment as assess
 from tenacity import retry, wait_exponential, retry_if_exception_type
 
@@ -12,12 +13,13 @@ class AssessmentResultPerCriteria(BaseModel):
     Output format for the risk-of-bias assessment.
     Each field requires explanation to guide the LLM in output generation.
     """
-    criteria: str
-    """This corresponds to "{number}) {criteria_name}" where {number} and {criteria_name} are the number and the name of the criteria respectively."""
-    result: str
-    """The overall decision for this item. Respond only with one of ['yes', 'no']."""
-    explanation: str
-    """A detailed reasoning that supports the decision, based on evidence from the document."""
+    # criteria: str
+    # """This corresponds to "{number}) {criteria_name}" where {number} and {criteria_name} are the number and the name of the criteria respectively."""
+    explanation: str = Field(..., description="A detailed reasoning that supports the decision, based on evidence from the document.")
+    result: str = Field(..., description="The overall decision for this item. Respond only with one of ['yes', 'no'].")
+
+# response_out = "responses_json"
+# os.makedirs(response_out, exist_ok=True)
 
 ### Methods ###
 def process_plain_text():
@@ -58,29 +60,28 @@ def process_plain_text():
         with open(os.path.join(assess.plain_text_input_folder, file_name), "r", encoding="utf-8") as f:
             document = f.read()
 
-        # Loop over criterion.
-        list_of_sub_criteria_keys = list(assess.criteria.keys())
-        for sub_criteria in list_of_sub_criteria_keys:
-            sub_criteria_prompt = assess.criteria[sub_criteria]
+        for criteria_id, sub_crit_dict in assess.nested_subs.items():
+            for sub_crit_id, sub_crit in sub_crit_dict.items():
+                sub_criteria_prompt = sub_crit["explanation"]
 
-            try:
-                structured_response = call_openai_response_api_plain_text_input(sub_criteria_prompt, document,
-                                                                                AssessmentResultPerCriteria)
-            except Exception as e:
-                exception = f"Error: {e}. Error prccessing {file_name}"
-                note_entry += f"\n{exception}\n"
-                assess.print_and_log(f"Processing Error. Exception: {exception}")
-                continue
+                try:
+                    structured_response = call_openai_response_api_plain_text_input(sub_criteria_prompt, document,
+                                                                                    AssessmentResultPerCriteria)
+                except Exception as e:
+                    exception = f"Error: {e}. Error prccessing {file_name}"
+                    note_entry += f"\n{exception}\n"
+                    assess.print_and_log(f"Processing Error. Exception: {exception}")
+                    continue
 
-            # Reasoning field.
-            note_entry += (f"\n{structured_response.output_parsed.criteria} = {structured_response.output_parsed.result}\n"
-                           f"\n{structured_response.output_parsed.explanation}\n")
-            # Append csv entry.
-            csv_entry += (f"{structured_response.output_parsed.result},") # comma at the end.
+                # Reasoning field.
+                note_entry += (f"\n{sub_crit_id}) {sub_crit['title']} = {structured_response.output_parsed.result}\n"
+                               f"\n{structured_response.output_parsed.explanation}\n")
+                # Append csv entry.
+                csv_entry += (f"{structured_response.output_parsed.result},") # comma at the end.
 
-            # Responses tokens.
-            tokens_this_paper += structured_response.usage.total_tokens
-            time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
+                # Responses tokens.
+                tokens_this_paper += structured_response.usage.total_tokens
+                time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
         assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
         tokens_all_papers += tokens_this_paper
@@ -124,27 +125,28 @@ def process_pdf_stored_in_cloud(file_dict):
 
         # Loop over criterion.
         list_of_sub_criteria_keys = list(assess.criteria.keys())
-        for sub_criteria in list_of_sub_criteria_keys:
-            sub_criteria_prompt = assess.criteria[sub_criteria]
+        for criteria_id, sub_crit_dict in assess.nested_subs.items():
+            for sub_crit_id, sub_crit in sub_crit_dict.items():
+                sub_criteria_prompt = sub_crit["explanation"]
 
-            try:
-                structured_response = call_openai_response_api_file_upload(sub_criteria_prompt,
-                                                                           file_id, AssessmentResultPerCriteria)
-            except Exception as e:
-                exception = f"Error: {e}. Error prccessing {file_name}"
-                note_entry += f"\n{exception}\n"
-                assess.print_and_log(f"Processing Error. Exception: {exception}")
-                continue
+                try:
+                    structured_response = call_openai_response_api_file_upload(sub_criteria_prompt,
+                                                                               file_id, AssessmentResultPerCriteria)
+                except Exception as e:
+                    exception = f"Error: {e}. Error prccessing {file_name}"
+                    note_entry += f"\n{exception}\n"
+                    assess.print_and_log(f"Processing Error. Exception: {exception}")
+                    continue
 
-            # Reasoning field.
-            note_entry += (f"\n{structured_response.output_parsed.criteria} = {structured_response.output_parsed.result}\n"
-                           f"\n{structured_response.output_parsed.explanation}\n")
-            # Append csv entry.
-            csv_entry += (f"{structured_response.output_parsed.result},")  # comma at the end.
-            # Responses tokens.
-            tokens_this_paper += structured_response.usage.total_tokens
+                # Reasoning field.
+                note_entry += (f"\n{sub_crit_id}) {sub_crit['title']} = {structured_response.output_parsed.result}\n"
+                               f"\n{structured_response.output_parsed.explanation}\n")
+                # Append csv entry.
+                csv_entry += (f"{structured_response.output_parsed.result},")  # comma at the end.
+                # Responses tokens.
+                tokens_this_paper += structured_response.usage.total_tokens
 
-            time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
+                time.sleep(assess.sleep_time)  # prevent TPM rate limit error, in second.
 
         assess.print_and_log(f"This paper ({file_name}) consumed {tokens_this_paper} tokens.")
         tokens_all_papers += tokens_this_paper
@@ -189,6 +191,15 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
         ],
         text_format=output_format,
     )
+
+    # # Save response object.
+    # with open(os.path.join(response_out, f"{response.created_at}_output.json"), "w", encoding="utf-8") as f:
+    #     json.dump(response.model_dump(), f, ensure_ascii=False, indent=2)
+    #
+    # response_input = assess.client.responses.input_items.list(response.id)
+    # with open(os.path.join(response_out, f"{response.created_at}_input.json"), "w", encoding="utf-8") as f:
+    #     json.dump(response_input.model_dump(), f, ensure_ascii=False, indent=2)
+
     return response
 
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
