@@ -1,4 +1,3 @@
-import json
 import os
 import time
 import openai
@@ -13,13 +12,8 @@ class AssessmentResultPerCriteria(BaseModel):
     Output format for the risk-of-bias assessment.
     Each field requires explanation to guide the LLM in output generation.
     """
-    # criteria: str
-    # """This corresponds to "{number}) {criteria_name}" where {number} and {criteria_name} are the number and the name of the criteria respectively."""
     explanation: str = Field(..., description="A detailed reasoning that supports the decision, based on evidence from the document.")
     result: str = Field(..., description="The overall decision for this item. Respond only with one of ['yes', 'no'].")
-
-# response_out = "responses_json"
-# os.makedirs(response_out, exist_ok=True)
 
 ### Methods ###
 def process_plain_text():
@@ -65,8 +59,12 @@ def process_plain_text():
                 sub_criteria_prompt = sub_crit["explanation"]
 
                 try:
-                    structured_response = call_openai_response_api_plain_text_input(sub_criteria_prompt, document,
+                    if assess.robust_mode == True:
+                        structured_response = call_openai_response_api_plain_text_input_robust(sub_criteria_prompt, document,
                                                                                     AssessmentResultPerCriteria)
+                    else:
+                        structured_response = call_openai_response_api_plain_text_input(sub_criteria_prompt, document,
+                                                                                        AssessmentResultPerCriteria)
                 except Exception as e:
                     exception = f"Error: {e}. Error prccessing {file_name}"
                     note_entry += f"\n{exception}\n"
@@ -124,14 +122,17 @@ def process_pdf_stored_in_cloud(file_dict):
         tokens_this_paper = 0
 
         # Loop over criterion.
-        list_of_sub_criteria_keys = list(assess.criteria.keys())
         for criteria_id, sub_crit_dict in assess.nested_subs.items():
             for sub_crit_id, sub_crit in sub_crit_dict.items():
                 sub_criteria_prompt = sub_crit["explanation"]
 
                 try:
-                    structured_response = call_openai_response_api_file_upload(sub_criteria_prompt,
-                                                                               file_id, AssessmentResultPerCriteria)
+                    if assess.robust_mode == True:
+                        structured_response = call_openai_response_api_file_upload_robust(sub_criteria_prompt,
+                                                                                   file_id, AssessmentResultPerCriteria)
+                    else:
+                        structured_response = call_openai_response_api_file_upload(sub_criteria_prompt,
+                                                                                   file_id, AssessmentResultPerCriteria)
                 except Exception as e:
                     exception = f"Error: {e}. Error prccessing {file_name}"
                     note_entry += f"\n{exception}\n"
@@ -192,15 +193,48 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
         text_format=output_format,
     )
 
-    # # Save response object.
-    # with open(os.path.join(response_out, f"{response.created_at}_output.json"), "w", encoding="utf-8") as f:
-    #     json.dump(response.model_dump(), f, ensure_ascii=False, indent=2)
-    #
-    # response_input = assess.client.responses.input_items.list(response.id)
-    # with open(os.path.join(response_out, f"{response.created_at}_input.json"), "w", encoding="utf-8") as f:
-    #     json.dump(response_input.model_dump(), f, ensure_ascii=False, indent=2)
-
     return response
+
+@retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
+       retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
+def call_openai_response_api_plain_text_input_robust(messages, document, output_format):
+
+    response = assess.client.responses.create(
+        model=assess.model_name,
+        temperature=assess.model_temperature,
+        instructions=assess.intro_prompt,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": f"{messages}\n"
+                    },
+                    {
+                        "type": "input_text",
+                        "text": f"\nHere is the paper:\n{document}"
+                    }
+                ]
+            },
+        ]
+    )
+    response_text = response.output_text
+
+    # Parser
+    parsed = assess.client.responses.parse(
+        model=assess.parser_model_name,
+        temperature=0,
+        instructions=f"""
+        Parse the following response into the provided schema. DO NOT change the content of the response.
+        """,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
+        text_format=output_format,
+    )
+
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
+    return parsed
 
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
        retry=retry_if_exception_type(openai.RateLimitError))
@@ -234,3 +268,48 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
     )
 
     return response
+
+@retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
+       retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
+def call_openai_response_api_file_upload_robust(messages, file_id, output_format):
+    """
+    Function to call OpenAI API (Structured Output), intended for files stored in OpenAI platform. Uses two-step prompting.
+    :param messages: messages (prompt, string), file_id (string).
+    :return: AssessmentResult
+    """
+    response = assess.client.responses.create(
+        model=assess.model_name,
+        temperature=assess.model_temperature,
+        instructions=assess.intro_prompt,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": messages,
+                    },
+                    {
+                        "type": "input_file",
+                        "file_id": file_id
+                    }
+                ]
+            },
+        ],
+    )
+    response_text = response.output_text
+
+    # Parser
+    parsed = assess.client.responses.parse(
+        model=assess.parser_model_name,
+        temperature=0,
+        instructions=f"""
+        Parse the following response into the provided schema. DO NOT change the content of the response.
+        """,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
+        text_format=output_format,
+    )
+
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
+    return parsed

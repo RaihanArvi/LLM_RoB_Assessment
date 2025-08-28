@@ -51,7 +51,11 @@ def process_plain_text():
 
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
         try:
-            structured_response = call_openai_response_api_plain_text_input(assess.prompt_body, document, AssessmentResult)
+            if assess.robust_mode == True:
+                structured_response = call_openai_response_api_plain_text_input_robust(assess.prompt_body, document, AssessmentResult)
+            else:
+                structured_response = call_openai_response_api_plain_text_input(assess.prompt_body, document,
+                                                                                       AssessmentResult)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
             note_entry += f"\n{exception}\n"
@@ -102,7 +106,11 @@ def process_pdf_stored_in_cloud(file_dict):
         note_entry += f"\n=== Paper {i + 1}: {file_name} ===\n"
 
         try:
-            structured_response = call_openai_response_api_file_upload(assess.prompt_body, file_id, AssessmentResult)
+            if assess.robust_mode == True:
+                structured_response = call_openai_response_api_file_upload_robust(assess.prompt_body, file_id, AssessmentResult)
+            else:
+                structured_response = call_openai_response_api_file_upload(assess.prompt_body, file_id,
+                                                                                  AssessmentResult)
         except Exception as e:
             exception = f"Error: {e}. Error prccessing {file_name}"
             note_entry += f"\n{exception}\n"
@@ -165,6 +173,51 @@ def call_openai_response_api_file_upload(messages, file_id, output_format):
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
        retry=retry_if_exception_type(openai.RateLimitError))
 @retry(retry=retry_if_exception_type(openai.APIConnectionError))
+def call_openai_response_api_file_upload_robust(messages, file_id, output_format):
+    """
+    Function to call OpenAI API (Structured Output), intended for files stored in OpenAI platform.
+    :param messages: messages (prompt, string), file_id (string).
+    :return: AssessmentResult
+    """
+    response = assess.client.responses.parse(
+        model=assess.model_name,
+        temperature=assess.model_temperature,
+        instructions=assess.intro_message,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": messages,
+                    },
+                    {
+                        "type": "input_file",
+                        "file_id": file_id
+                    }
+                ]
+            },
+        ]
+    )
+    response_text = response.output_text
+
+    # Parser
+    parsed = assess.client.responses.parse(
+        model=assess.parser_model_name,
+        temperature=0,
+        instructions=f"""
+        Parse the following response into the provided schema. DO NOT change the content of the response.
+        """,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
+        text_format=output_format,
+    )
+
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
+    return parsed
+
+@retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
+       retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
 def call_openai_response_api_plain_text_input(messages, document, output_format):
     """
     Function to call OpenAI API (Structured Output), intended for files parsed locally.
@@ -194,3 +247,49 @@ def call_openai_response_api_plain_text_input(messages, document, output_format)
     )
 
     return response
+
+@retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
+       retry=retry_if_exception_type(openai.RateLimitError))
+@retry(retry=retry_if_exception_type(openai.APIConnectionError))
+def call_openai_response_api_plain_text_input_robust(messages, document, output_format):
+    """
+    Function to call OpenAI API (Structured Output), intended for files parsed locally.
+    :param messages: messages (prompt, string), document (string).
+    :return: AssessmentResult
+    """
+    response = assess.client.responses.create(
+        model=assess.model_name,
+        temperature=assess.model_temperature,
+        instructions=assess.intro_message,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": f"{messages}\n"
+                    },
+                    {
+                        "type": "input_text",
+                        "text": f"\nHere is the paper:\n{document}"
+                    }
+                ]
+            },
+        ]
+    )
+    response_text = response.output_text
+
+    # Parser
+    parsed = assess.client.responses.parse(
+        model=assess.parser_model_name,
+        temperature=0,
+        instructions=f"""
+        Parse the following response into the provided schema. DO NOT change the content of the response.
+        {assess.output_format_prompt}
+        """,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
+        text_format=output_format,
+    )
+
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
+    return parsed

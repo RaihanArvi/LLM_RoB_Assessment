@@ -18,8 +18,12 @@ with open("config.yaml", "r") as config_file:
 apikey = config["api_key"]
 client = OpenAI(api_key=apikey)
 model_name = config.get("model", "gpt-4o")  # default gpt-4o
+parser_model_name = config.get("parser_model", "gpt-4o-mini")
 mode = config.get("mode", "one_by_one")  # default to one_by_one
 model_temperature = config["temperature"]
+
+# Robust Mode
+robust_mode = config["RobustMode"]
 
 # Set tiktoken encoder.
 enc = tiktoken.encoding_for_model(model_name)

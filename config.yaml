@@ -1,10 +1,14 @@
 # OpenAI
 api_key: ""
 model: "gpt-4o"
+parser_model: "gpt-4o-mini"
 temperature: 0.0
 
+# Robust Mode
+RobustMode: True
+
 # Error Handling
-SleepTime: 2 # sleep time between API calls (in seconds), to prevent TPM rate limit.
+SleepTime: 3 # sleep time between API calls (in seconds), to prevent TPM rate limit.
 RetryMultiplier: 1
 RetryMinimum: 4
 RetryMaximum: 10
