@@ -199,21 +199,10 @@ def call_openai_response_api_file_upload_robust(messages, file_id, output_format
             },
         ]
     )
-    response_text = response.output_text
 
-    # Parser
-    parsed = assess.client.responses.parse(
-        model=assess.parser_model_name,
-        temperature=0,
-        instructions=f"""
-        Parse the following response into the provided schema. DO NOT change the content of the response.
-        """,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
-        text_format=output_format,
-    )
-
-    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
-    return parsed
+    parsed = assess.call_parser(response, output_format)
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response.usage.total_tokens
+    return parsed, response
 
 @retry(wait=wait_exponential(multiplier=assess.retry_multiplier, min=assess.retry_min, max=assess.retry_max),
        retry=retry_if_exception_type(openai.RateLimitError))
@@ -277,19 +266,7 @@ def call_openai_response_api_plain_text_input_robust(messages, document, output_
             },
         ]
     )
-    response_text = response.output_text
 
-    # Parser
-    parsed = assess.client.responses.parse(
-        model=assess.parser_model_name,
-        temperature=0,
-        instructions=f"""
-        Parse the following response into the provided schema. DO NOT change the content of the response.
-        {assess.output_format_prompt}
-        """,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response_text}"}]}],
-        text_format=output_format,
-    )
-
-    parsed.usage.total_tokens = parsed.usage.total_tokens + response_text.usage.total_tokens
-    return parsed
+    parsed = assess.call_parser(response, output_format)
+    parsed.usage.total_tokens = parsed.usage.total_tokens + response.usage.total_tokens
+    return parsed, response

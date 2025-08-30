@@ -120,7 +120,7 @@ def print_and_log(*args, sep=" ", end="\n", file=None, flush=False):
 
 ### Methods ###
 
-def save_outputs(notes, summary):
+def save_outputs(notes, summary, raw_notes=None):
     with open(os.path.join(output_folder, f"assessment_notes_{start_system_time}.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(notes))
     print_and_log(f"Successfully saved assessment_notes_{start_system_time}.txt.")
@@ -129,6 +129,11 @@ def save_outputs(notes, summary):
         writer = csv.writer(f)
         writer.writerows(summary)
     print_and_log(f"Successfully saved assessment_summary_{start_system_time}.csv.")
+
+    if raw_notes != None:
+        with open(os.path.join(output_folder, f"assessment_notes_raw_unparsed_{start_system_time}.txt"), "w", encoding="utf-8") as f:
+            f.write("\n".join(raw_notes))
+        print_and_log(f"Successfully saved assessment_notes_raw_unparsed_{start_system_time}.txt.")
 
 
 def get_number_of_stored_files():
@@ -177,3 +182,15 @@ def upload_all_pdfs():
             print_and_log(f"Failed to upload {file_name}: {e}")
 
     return uploaded_files
+
+def call_parser(response, output_format):
+    parsed = client.responses.parse(
+        model=parser_model_name,
+        temperature=0,
+        instructions=f"""
+        Parse the following response into the provided schema. DO NOT change the content of the response.
+        """,
+        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response.output_text}"}]}],
+        text_format=output_format,
+    )
+    return parsed
