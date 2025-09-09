@@ -2,56 +2,116 @@ import os
 import csv
 import time
 import yaml
+import random
 import logging
-import tiktoken
 from openai import OpenAI
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 """
 Script to extract structured data from a set of markdown-converted papers
 using the OpenAI API, based on a protocol spreadsheet, and output a CSV.
 """
 
-# Load configuration from config.yaml
-with open("config.yaml", "r") as config_file:
-    config = yaml.safe_load(config_file)
 
-# Set OpenAI API key and model
-apikey = config["api_key"]
-client = OpenAI(api_key=apikey)
-model_name = config.get("model", "gpt-4o")  # default gpt-4o
-parser_model_name = config.get("parser_model", "gpt-4o-mini")
-mode = config.get("mode", "one_by_one")  # default to one_by_one
-model_temperature = config["temperature"]
+# Decorator to check any pdf operations uses OpenAI model only.
+def requires_openai(method):
+    """
+    Decorator to ensure the current model is OpenAI before any PDF-related action.
+    Raises ValueError with the required message if not.
+    """
+    def wrapper(self, *args, **kwargs):
+        self._ensure_openai_for_pdfs()
+        return method(self, *args, **kwargs)
+    return wrapper
 
-# Robust Mode
-robust_mode = config["RobustMode"]
 
-# Set tiktoken encoder.
-enc = tiktoken.encoding_for_model(model_name)
+class Assessment:
+    def __init__(
+        self,
+        apikey,
+        model_name,
+        temperature,
+        mode,
+        sleep_time,
+        retry_multiplier,
+        retry_min,
+        retry_max,
+        pdf_input_folder,
+        plain_text_input_folder,
+        output_folder,
+        prompt_file,
+        logger_output_folder,
+    ):
+        # Core config
+        self.apikey = apikey
+        self.model_name = model_name
+        self.temperature = float(temperature)
+        self.mode = mode
+        self.sleep_time = float(sleep_time)
+        self.retry_multiplier = float(retry_multiplier)
+        self.retry_min = float(retry_min)
+        self.retry_max = float(retry_max)
 
-# Between assessment sleep time in seconds
-sleep_time = config.get("SleepTime", 0.5)
+        # OpenAI & LLM
+        self.client = None
+        self.llm = None
 
-# exponential backoff
-retry_multiplier = config["RetryMultiplier"]
-retry_min = config["RetryMinimum"]
-retry_max = config["RetryMaximum"]
+        # Paths
+        self.pdf_input_folder = pdf_input_folder
+        self.plain_text_input_folder = plain_text_input_folder
+        self.output_folder = output_folder
+        self.prompt_file = prompt_file
+        self.logger_output_folder = logger_output_folder
 
-# File and folder setup
-pdf_input_folder = config["pdf_input_files_folder"]
-plain_text_input_folder = config["plain_text_input_files_folder"]
-output_folder = config["output_files_folder"]
-prompt_file = config["prompt_file_path"]
-logger_output_folder = config["logger_output_folder"]
+        # (Optional) basic checks / setup
+        if not (0.0 <= self.temperature <= 2.0):
+            raise ValueError("temperature must be between 0.0 and 2.0")
 
-# Load YAML prompt script
-with open(prompt_file, "r") as f:
-    script = yaml.safe_load(f)
+        for p in (
+            self.pdf_input_folder,
+            self.plain_text_input_folder,
+            self.output_folder,
+            self.logger_output_folder,
+        ):
+            os.makedirs(p, exist_ok=True)
 
-# Create output folder
-os.makedirs(output_folder, exist_ok=True)
+        # Timestamp for filenames
+        self.start_time_str = time.strftime("%d-%m-%Y_%H:%M:%S", time.localtime())
 
-# Notes Header
-notes_header = r"""
+        # Prompt
+        self.load_prompt_script(prompt_file)
+        self.build_prompt_structures()
+        self.initialize_model_backend()
+
+        # Output format for per sub criteria.
+        self.pseudo_json_output_format = '''
+# Output Format
+Please output the result STRICTLY in the format below:
+{
+  "explanation": str,
+  "result": str
+}
+where explanation is a detailed reasoning that supports the decision, based on evidence from the document, and result is the overall decision for this item, respond only with one of ['yes', 'no'].
+        '''
+
+        # Output format for all criteria.
+        self.all_criteria_output_format = self.generate_all_criteria_output_format()
+
+        # Logger setup
+        log_path = os.path.join(
+            self.logger_output_folder, f"rob_log_{self.start_time_str}.log"
+        )
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_path, encoding="utf-8")],
+        )
+        self.logger = logging.getLogger("rob_logger")
+
+        # Notes Header
+        self.notes_header = fr"""
   ___  ___________  _____       ______          _           _   
  / _ \|_   _| ___ \/  ___|      | ___ \        (_)         | |  
 / /_\ \ | | | |_/ /\ `--. ______| |_/ / __ ___  _  ___  ___| |_ 
@@ -62,135 +122,244 @@ notes_header = r"""
                                              |__/               
 Risk-of-Bias Assessment Results
 
-"""
+LLM Model: {self.model_name}
+Temperature: {self.temperature}
+        """
 
-# Intro message (including output format, according to AssessmentResult object).
-intro_prompt = script["Intro"]
-output_format_prompt = script["OutputFormat"]
-intro_message = intro_prompt + "\n" + output_format_prompt
+    # -------- LLM Provider detection -------- #
+    @staticmethod
+    def is_openai_model(model_name: str | None) -> bool:
+        return bool(model_name) and model_name.strip().lower().startswith("gpt-")
 
-# Nested prompt structure.
-nested_subs = {
-    crit["id"]: {
-        sub["id"]: {
-            "title": sub.get("title", ""),
-            "explanation": sub.get("explanation", "")
-        }
-        for sub in crit.get("sub_criteria", [])
-    }
-    for crit in script.get("Criteria", [])
-}
+    def _ensure_openai_for_pdfs(self) -> None:
+        """Guard: PDFs only supported for OpenAI models; ensure OpenAI client exists."""
+        if not Assessment.is_openai_model(self.model_name):
+            raise ValueError("pdfs upload only supported using openai models")
 
-# for AllCriteria (all criteria joined):
-prompt_body = "\n\n".join(
-    sub["explanation"].rstrip()
-    for parent in nested_subs.values()
-    for sub in parent.values()
-    if sub["explanation"]
-)
+        if self.client is None:
+            from openai import OpenAI
+            api_key = self.apikey or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI API key is required for PDF operations.")
+            self.client = OpenAI(api_key=api_key)
 
-# Summary Header
-CSVEntryHeader = "no, file_name"
-for criteria_id, sub_crit_dict in nested_subs.items():
-    for sub_crit_id, sub_crit in sub_crit_dict.items():
-        # column_header = f", criteria {sub_crit_id}" # another option.
-        column_header = f", {sub_crit_id}) {sub_crit['title']}"
-        CSVEntryHeader = "".join([CSVEntryHeader, column_header])
-summary_header = CSVEntryHeader.split(", ")
+    @staticmethod
+    def is_claude_model(model_name: str | None) -> bool:
+        return bool(model_name) and model_name.strip().lower().startswith("claude-")
 
-### Logger ###
-t = time.localtime()
-start_system_time = time.strftime("%d-%m-%Y_%H:%M:%S", t)
+    @staticmethod
+    def is_gemini_model(model_name: str | None) -> bool:
+        return bool(model_name) and model_name.strip().lower().startswith("gemini-")
 
-# File handler for logger.
-os.makedirs(logger_output_folder, exist_ok=True)
-# Setup logger.
-os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(os.path.join(logger_output_folder, f"rob_log_{start_system_time}.log"), encoding="utf-8")]
-)
-logger = logging.getLogger("logger")
+    def initialize_model_backend(self) -> None:
+        """
+        Create self.llm depending on model_name.
+        Create self.client only for OpenAI (used for PDF file APIs).
+        Required env/keys:
+          - OpenAI:    self.apikey or env OPENAI_API_KEY
+          - Claude:    self.apikey or env ANTHROPIC_API_KEY
+          - Gemini:    self.apikey or env GOOGLE_API_KEY
+        """
+        # Clear any prior state
+        self.client = None
+        self.llm = None
 
-def print_and_log(*args, sep=" ", end="\n", file=None, flush=False):
-    message = sep.join(str(a) for a in args)
-    logger.info(message)                  # log to file
-    print(message, sep=sep, end=end, file=file, flush=flush)  # print to console
+        # ---- OpenAI
+        if Assessment.is_openai_model(self.model_name):
+            api_key = self.apikey or os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("API key required for OpenAI models (OPENAI_API_KEY).")
 
-### Methods ###
+            self.client = OpenAI(api_key=api_key)  # used for Files API (PDF ops)
+            self.llm = ChatOpenAI(model=self.model_name, temperature=self.temperature)
+            return
 
-def save_outputs(notes, summary, raw_notes=None):
-    with open(os.path.join(output_folder, f"assessment_notes_{start_system_time}.txt"), "w", encoding="utf-8") as f:
-        f.write("\n".join(notes))
-    print_and_log(f"Successfully saved assessment_notes_{start_system_time}.txt.")
+        # ---- Claude (Anthropic)
+        if Assessment.is_claude_model(self.model_name):
+            api_key = self.apikey or os.getenv("ANTHROPIC_API_KEY")
+            if not api_key:
+                raise ValueError("API key required for Claude models (ANTHROPIC_API_KEY).")
 
-    with open(os.path.join(output_folder, f"assessment_summary_{start_system_time}.csv"), "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerows(summary)
-    print_and_log(f"Successfully saved assessment_summary_{start_system_time}.csv.")
-
-    if raw_notes != None:
-        with open(os.path.join(output_folder, f"assessment_notes_raw_unparsed_{start_system_time}.txt"), "w", encoding="utf-8") as f:
-            f.write("\n".join(raw_notes))
-        print_and_log(f"Successfully saved assessment_notes_raw_unparsed_{start_system_time}.txt.")
-
-
-def get_number_of_stored_files():
-    return len(client.files.list().data)
-
-def delete_all_stored_files():
-    files = client.files.list()
-    for file in files.data:
-        client.files.delete(file.id)
-        logging.debug("Deleted file: " + file.filename)
-        print_and_log("Deleted file: " + file.filename)
-    print_and_log("Stored files deleted successfully.")
-
-def get_file_name_id_dict():
-    file_dict = {}
-    files = client.files.list()
-    for file in files:
-        file_dict[file.filename] = file.id
-    return file_dict
-
-def upload_all_pdfs():
-    """
-    Uploads all .pdf files in the input folder to OpenAI.
-    Returns a dictionary: {file_name: file_id}
-    """
-    uploaded_files = {}
-    print_and_log("Uploading " + str(len(os.listdir(pdf_input_folder))) + " files.")
-
-    for file_name in sorted(os.listdir(pdf_input_folder)):
-        if not file_name.lower().endswith(".pdf"):
-            logging.warning("This file is not a pdf: " + file_name)
-            continue
-
-        file_path = os.path.join(pdf_input_folder, file_name)
-        try:
-            print_and_log("Uploading " + file_name)
-            file = client.files.create(
-                file=open(file_path, "rb"),
-                purpose="assistants"
+            self.llm = ChatAnthropic(
+                model=self.model_name,
+                temperature=self.temperature,
+                api_key=api_key,
             )
-            uploaded_files[file_name] = file.id
-            print_and_log("Uploaded " + file_name)
-            time.sleep(0.1)
+            return
 
-        except Exception as e:
-            print_and_log(f"Failed to upload {file_name}: {e}")
+        # ---- Gemini (Google)
+        if Assessment.is_gemini_model(self.model_name):
+            api_key = self.apikey or os.getenv("GOOGLE_API_KEY")
+            if not api_key:
+                raise ValueError("API key required for Gemini models (GOOGLE_API_KEY).")
 
-    return uploaded_files
+            self.llm = ChatGoogleGenerativeAI(
+                model=self.model_name,
+                temperature=self.temperature,
+                google_api_key=api_key,
+            )
+            return
 
-def call_parser(response, output_format):
-    parsed = client.responses.parse(
-        model=parser_model_name,
-        temperature=0,
-        instructions=f"""
-        Parse the following response into the provided schema. DO NOT change the content of the response.
-        """,
-        input=[{"role": "user", "content": [{"type": "input_text", "text": f"Response: {response.output_text}"}]}],
-        text_format=output_format,
-    )
-    return parsed
+        raise ValueError(f"Unsupported model name: {self.model_name}")
+
+    ######
+
+    # ----- Prompt Loading ----- #
+    def load_prompt_script(self, path: str) -> None:
+        """Load YAML prompt script into self.script."""
+        with open(path, "r", encoding="utf-8") as f:
+            self.script = yaml.safe_load(f) or {}
+
+    def build_prompt_structures(self) -> None:
+        """Compute nested sub-criteria, prompt body, intro message, and CSV header list."""
+        script = self.script or {}
+        self.intro_prompt = script["Intro"]
+
+        # Nested sub-criteria dict
+        self.nested_subs = {
+            crit["id"]: {
+                sub["id"]: {
+                    "title": sub.get("title", ""),
+                    "explanation": sub.get("explanation", ""),
+                }
+                for sub in crit.get("sub_criteria", [])
+            }
+            for crit in script.get("Criteria", [])
+        }
+
+        # Prompt body (joined explanations)
+        self.prompt_body = "\n\n".join(
+            sub["explanation"].rstrip()
+            for parent in self.nested_subs.values()
+            for sub in parent.values()
+            if sub["explanation"]
+        )
+
+        # CSV header
+        CSVEntryHeader = "no, file_name"
+        for criteria_id, sub_crit_dict in self.nested_subs.items():
+            for sub_crit_id, sub_crit in sub_crit_dict.items():
+                column_header = f", {sub_crit_id}) {sub_crit['title']}"
+                CSVEntryHeader = "".join([CSVEntryHeader, column_header])
+        self.summary_header = CSVEntryHeader.split(", ")
+
+    def print_and_log(self, *args, sep=" ", end="\n", file=None, flush=False):
+        message = sep.join(str(a) for a in args)
+        self.logger.info(message)                  # log to file
+        print(message, sep=sep, end=end, file=file, flush=flush)  # print to console
+
+    def generate_all_criteria_output_format(self) -> str:
+        top = """
+# Output Format
+
+Please output the result STRICTLY in the format below:
+{
+  "explanation": str,
+  "result": str
+}
+where explanation is a detailed reasoning that supports the decision, based on evidence from the document, and result is the overall decision for this item, respond only with one of ['yes', 'no'].
+
+For the "explanation" field, write the detailed reasoning of ALL criteria alongside the assessment result ["yes","no"] of the corresponding criteria. 
+
+### "result" Field
+For each reported outcome in the RCT, provide the evaluation results in the following format for the "result":
+
+Only return a CSV entry with exactly the following columns, all lowercase:
+        """
+
+        result = []
+        for criteria_id, sub_crit_dict in self.nested_subs.items():
+            for sub_crit_id, sub_crit in sub_crit_dict.items():
+                result.append(sub_crit["title"])
+        column_names = "[" + ", ".join(f'"{item}"' for item in result) + "]"
+
+        # Generate random yes/no for each column
+        yn_entries = [random.choice(["yes", "no"]) for _ in result]
+        example_row = (
+                "  Example summary CSV entry:\n  " + ",".join(yn_entries)
+        )
+
+        bottom = f"""
+Important:
+- Return one row only, comma-separated.
+- Exactly {len(result)} values in the order listed above.
+- Each criteria must have its own value.
+- If unsure or no information is available, write "NA".
+- Never add or remove columns.
+- Never merge multiple values into one field.
+        """
+
+        final_output_format = (
+                top
+                + "\n  " + column_names + "\n\n"
+                + "  Example summary CSV entry:\n  " + example_row + "\n"
+                + bottom
+        )
+
+        return final_output_format
+
+    # ----- Methods ----- #
+
+    def save_outputs(self, notes, summary):
+        with open(os.path.join(self.output_folder, f"assessment_notes_{self.start_time_str}.txt"),
+                  "w", encoding="utf-8") as f:
+            f.write("\n".join(notes))
+        self.print_and_log(f"Successfully saved {self.output_folder}/assessment_notes_{self.start_time_str}.txt.")
+
+        with open(os.path.join(self.output_folder, f"assessment_summary_{self.start_time_str}.csv"),
+                  "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerows(summary)
+        self.print_and_log(f"Successfully saved {self.output_folder}/assessment_summary_{self.start_time_str}.csv.")
+
+    @requires_openai
+    def get_number_of_stored_files(self):
+        return len(self.client.files.list().data)
+
+    @requires_openai
+    def delete_all_stored_files(self):
+        files = self.client.files.list()
+        for file in files.data:
+            self.client.files.delete(file.id)
+            logging.debug("Deleted file: " + file.filename)
+            self.print_and_log("Deleted file: " + file.filename)
+        self.print_and_log("All stored files deleted successfully.")
+
+    @requires_openai
+    def get_file_name_id_dict(self):
+        file_dict = {}
+        files = self.client.files.list()
+        for file in files:
+            file_dict[file.filename] = file.id
+        return file_dict
+
+    @requires_openai
+    def upload_all_pdfs(self):
+        """
+        Uploads all .pdf files in the input folder to OpenAI.
+        Returns a dictionary: {file_name: file_id}
+        """
+        uploaded_files = {}
+        self.print_and_log("Uploading " + str(len(os.listdir(self.pdf_input_folder))) + " files.")
+
+        for file_name in sorted(os.listdir(self.pdf_input_folder)):
+            if not file_name.lower().endswith(".pdf"):
+                logging.warning("This file is not a pdf: " + file_name)
+                continue
+
+            file_path = os.path.join(self.pdf_input_folder, file_name)
+            try:
+                self.print_and_log("Uploading " + file_name)
+                file = self.client.files.create(
+                    file=open(file_path, "rb"),
+                    purpose="assistants"
+                )
+                uploaded_files[file_name] = file.id
+                self.print_and_log("Uploaded " + file_name)
+                time.sleep(0.1)
+
+            except Exception as e:
+                self.print_and_log(f"Failed to upload {file_name}: {e}")
+        self.print_and_log("Successfully uploaded  " + str(len(os.listdir(self.pdf_input_folder))) + " files.")
+
+        return uploaded_files

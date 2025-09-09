@@ -14,36 +14,60 @@ Criteria:
 
 - id: '1'
   title: Criteria 1
-  instruction: ''
+  explanation: ''
   sub_criteria:
 
   - id: '1.1'
     title: Confounder Possibility
-    instruction: |
-        ### 1.4) Confounder Accuracy
-        SAMLSAPEMSAPLE
+    explanation: |
+        # Risk of Bias Assessment Criteria
+        ### 1.1) Confounder Possibility: 
+        Could any variable that is not appropriately controlled affect both the assignment (or uptake) of the intervention and the outcome?
+        Consider the following:
+        - Some examples of confounders are Electricity use, Energy prices, Environmental attitudes, HH variables (e.g. Age, Gender, education level, income), Residence variables (e.g. Location, Size, Ownership; Seasonality etc.), Weather etc.
+        - If the intervention was implemented only by self-selected partner organizations, agencies, utilities, or regions, respond with **yes**.
+        - If statistically significant differences existed in pretreatment variables between control and treatment group(s), then respond with **no**.
+        - If there are any structural, organizational, or contextual factors that affect both participation in the intervention and the outcome, respond **yes**.
+        - If randomization occurred within units (e.g., within utilities), but the units themselves were not randomly selected, respond with **yes**.
+        ###
 
   - id: '1.2'
     title: Confounder All
-    instruction: |
-        ### 1.4) Confounder Accuracy
-        SAMLSAPEMSAPLE
+    explanation: |
+        ### 1.2) Confounder All: 
+        Did the authors control for all the potential confounders?
+        Consider the following:
+        - If any potential confounder was unmeasured, unadjusted, or found irrelevant but plausibly related to the outcome, respond **no**.
+        - If all potential confounders were measured, respond **yes**.
+        - Respond **yes** if the study used randomization and/or statistical adjustment for the main known confounders (e.g., demographics, household characteristics, baseline outcomes, weather, etc.).
+        - Respond **yes** if minor pretreatment imbalances exist but were adjusted for, or are expected due to chance in randomized designs.
+        - Respond **yes** if authors acknowledged potential confounders and showed steps to account for them.
+        ###
 
   - id: '1.3'
     title: Confounder Justified Omission
-    instruction: |
-        ### 1.4) Confounder Accuracy
-        SAMLSAPEMSAPLE
+    explanation: |
+        # Risk of Bias Assessment Criteria
+        ### 1.3) Confounder Justified Omission:
+        In your expert opinion, is there any justifiable reason for not controlling for all the potential confounders (so that omission of some of the potential confounders is unlikely to influence the assessment of the effectiveness or impact)?
+        
+        Consider the following: 
+        - Select **yes** when there is evidence that omission of some of the potential confounders does not affect the assessment of effectiveness or impact. This may be the case if adjusting all potential confounders will lead to overadjustment, or an ‘instrumental variable’ is used for estimating the effectiveness or impact, etc.
+        - Otherwise select **no**. 
 
   - id: '1.4'
     title: Confounder Accuracy
-    instruction: |
-        ### 1.4) Confounder Accuracy
-        SAMLSAPEMSAPLE
+    explanation: |
+        ### 1.4) Confounder Accuracy: 
+        Were the potential confounders, that were controlled for, (and/or the instrumental variable used if applicable) likely to be measured accurately and precisely enough?
+        Consider the following:
+        - Measurements of factors may be nominal (categorical), ordinal (ranks) or scale.
+        - ONLY answer "No" if confounders were mostly self-reported and no modeling or design compensates for this. Otherwise, answer "Yes"
+        ###
 
   - id: '1.5'
     title: Confounder Analysis
-    instruction: |
+    explanation: |
       ### 1.1) Confounder Analysis:
       Did the author(s) analyse the effect appropriately by taking into account the potential confounders, as well as the issue of accuracy and precision of the measurements of the potential confounders (and the instrumental variable if applicable)?
 
@@ -61,12 +85,12 @@ Criteria:
 
 - id: '2'
   title: Criteria 2
-  instruction: ''
+  explanation: ''
   sub_criteria:
 
   - id: '2.1'
     title: SampleExchangeability
-    instruction: |
+    explanation: |
       ### 2.1) SampleExchangeability:
       Was the selection of subjects or areas AFTER intervention or exposure random or systematic (i.e., based on random or systematic sampling), and exchangeability between groups could be assumed based on the selection approach?
 
@@ -79,7 +103,7 @@ Criteria:
   
   - id: '2.3'
     title: Sample Exclusion
-    instruction: |
+    explanation: |
       ### 2.3) Sample Exclusion
       After the start of the intervention/exposure or during the analysis, were any subjects or areas excluded or lost from the study or analysis? When some subjects or areas, or collected data are excluded, it might increase the risk of post-intervention/exposure selection bias.
 
@@ -89,7 +113,7 @@ Criteria:
   
   - id: '2.4'
     title: SampleGroupComparability
-    instruction: |
+    explanation: |
       ### 2.4) SampleGroupComparability
       Were the subjects or areas included in the study (or analysis) comparable between groups and so they allowed a valid comparison to be made (i.e., exchangeability or conditional exchangeability between groups could be assumed)?
 
@@ -104,7 +128,7 @@ Criteria:
   
   - id: '2.5'
     title: Sample Group Difference Intervention
-    instruction: |
+    explanation: |
       ### 2.5) Sample Group Difference Intervention
       Were the difference(s) between groups likely to be explained by the intervention/exposure or a variable influenced by the intervention/exposure (including the outcome)?
 
@@ -115,7 +139,7 @@ Criteria:
   
   - id: '2.6'
     title: Sample Bias Adjustment
-    instruction: |
+    explanation: |
       ### 2.6) Sample Bias Adjustment:
       Did the author(s) adjust for the potential post- intervention/exposure selection bias in an appropriate way?
 
@@ -131,12 +155,12 @@ Criteria:
 
 - id: '5'
   title: Criteria 5
-  instruction: ''
+  explanation: ''
   sub_criteria:
 
   - id: '5.1'
     title: Aware of Study
-    instruction: |
+    explanation: |
       ### 1.1) Aware of Study:
       Was there any way for the outcome measure to be affected by knowledge of the exposure, intervention, subjects or areas, or desire for certain outcome?
 
@@ -148,12 +172,12 @@ Criteria:
 
 - id: '6'
   title: Criteria 6
-  instruction: ''
+  explanation: ''
   sub_criteria:
 
   - id: '6.1'
     title: DataSelective
-    instruction: |
+    explanation: |
       ### 6.1) DataSelective:
       Are the reported effect estimate likely to only represent a part of measurements of the outcome, i.e. only a part of measured outcomes is reported. E.g., only 80 measured outcomes are reported when there are 100, or the effect estimate is based on 80 measured outcomes when there are 100.
 
@@ -164,8 +188,8 @@ Criteria:
       - If the study does not provide sufficient information indicating that all measured outcomes were reported, respond **yes**. Otherwise, respond **no**.
   
   - id: '6.2'
-    title: Data Subgroups
-    instruction: |
+    title: Data_Subgroups
+    explanation: |
       ### 6.2) Data Subgroups:
       Are relevant outcome data likely to be unreported for some subgroup(s)? I.e., only outcome data on certain subjects or areas with certain characteristic(s) (e.g., taxonomic group) or in certain conditions (e.g., intervention intensity) are available.
 
@@ -174,8 +198,8 @@ Criteria:
       - If the study does not provide sufficient information indicating that all relevant outcome data of every subgroup was reported, respond **yes**. Otherwise, respond **no**.
   
   - id: '6.3'
-    title: Data Causal
-    instruction: |
+    title: Data_Causal
+    explanation: |
       ### 6.3) Data Causal:
       Is/are the analysis/analyses of the causal relationship of interest (intervention-outcome or exposure-outcome) likely to be partially reported? i.e., there is/are other relevant analysis/analyses of the causal relationship that is/are not reported.
 
@@ -185,12 +209,12 @@ Criteria:
 
 - id: '7'
   title: Criteria 7
-  instruction: ''
+  explanation: ''
   sub_criteria:
   
   - id: '7.1'
-    title: null
-    instruction: |
+    title: StatsRecording
+    explanation: |
       ### 7.1 StatsRecording
       Was/were the person(s), who estimated the effectiveness of the intervention or the impact of the exposure, aware of the exposure or intervention received by subjects or areas?
 
@@ -200,8 +224,8 @@ Criteria:
       - If the analysis and interpretation of the data were conducted by researchers who were aware of the intervention, then answer **yes**.
   
   - id: '7.2'
-    title: null
-    instruction: |
+    title: Stats_Descriptive_Error
+    explanation: |
       ### 7.2 StatsDescriptiveError:
       Is it likely that there is/are error(s) or inappropriate methods in the applied descriptive statistical analyses?
 
@@ -217,8 +241,8 @@ Criteria:
       - Avoid “all-clear” answers unless the study shows that every standard test/assumption check was feasible and applied correctly.
   
   - id: '7.3'
-    title: Stats Inferential Error
-    instruction: |
+    title: Stats_Inferential_Error
+    explanation: |
       ### 7.3) Stats Inferential Error:
       Is it likely that there is/are error(s) in the applied inferential statistics (including null hypothesis testing, estimation, coding)?
 
@@ -231,8 +255,8 @@ Criteria:
       - Respond **yes** if there are any errors, and **no** if there are no errors.
   
   - id: '7.4'
-    title: Stats Inferential Violation
-    instruction: |
+    title: Stats_Inferential_Violation
+    explanation: |
       ### 7.4) Stats Inferential Violation:
       Were assumptions for the applied inferential statistics violated or the applied inferential statistical methods inappropriate for the inferential goal(s)?
 
@@ -246,28 +270,3 @@ Criteria:
       - Was there inappropriate modelling which may affect an estimate of effectiveness or impact?
       - Was there any inappropriate choice of statistical tests?
       - Was any criteria for normality and equal variances are not satisfied?
- 
-OutputFormat: |
-  # Output Format
-  
-  For the "explanation" field, write the detailed reasoning of each sub criteria alongside the assessment result ["yes","no"] of the corresponding sub criteria. 
-  
-  
-  ### Summary Field
-  For each reported outcome in the RCT, provide the evaluation results in the following format for the "summary":
-
-  Only return a CSV entry with exactly the following columns, all lowercase:
-
-  ["criteria a.1", "criteria a.2", "criteria a.3", "criteria a.4", "criteria a.5" "criteria b.1", "criteria b.2", "criteria b.3",
-   "criteria b.4", "criteria b.5", "criteria c", "criteria d.1", "criteria d.2", "criteria d.3", "criteria e.1", "criteria e.2", "criteria e.3", "criteria e.4"]
-
-  Example summary CSV entry:
-  yes,no,no,yes,no,no,yes,no,yes,yes,yes,no,no,yes,no,yes,no,yes
-
-  Important:
-  - Return one row only, comma-separated.
-  - Exactly 18 values in the order listed above.
-  - Each criteria must have its own value.
-  - If unsure or no information is available, write "na".
-  - Never add or remove columns.
-  - Never merge multiple values into one field.
