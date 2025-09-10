@@ -87,12 +87,11 @@ def build_parser() -> argparse.ArgumentParser:
 
         Subcommands:
 
-          pdf upload|start|count|delete
-          all text start
-          per text start
+          openai-pdf upload|start|count|delete
+          assess-text start
     """)
     parser = argparse.ArgumentParser(
-        prog="rob-cli",
+        prog="airs-rob-cli",
         description=description,
         formatter_class=argparse.RawTextHelpFormatter,
     )
@@ -140,7 +139,7 @@ def main(argv: Optional[list] = None) -> int:
     )
 
     if args.command == "pdf" and not Assessment.is_openai_model(args.model):
-        print("pdfs upload only supported using openai models")
+        print("pdfs operations only supported using openai models")
         return 2
 
     # Dispatch
