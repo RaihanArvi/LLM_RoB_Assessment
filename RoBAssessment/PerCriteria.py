@@ -4,11 +4,10 @@ import json
 import openai
 from functools import wraps
 from typing import List
-from pydantic import BaseModel, Field
 from RoBAssessment import Assessment
+from core.schemas import AssessmentResultPerCriteria
 from tenacity import Retrying, retry, wait_exponential, retry_if_exception_type
 from langchain_core.messages import SystemMessage, HumanMessage
-
 
 # Decorator
 def retry_openai_dynamic(method):
@@ -30,17 +29,6 @@ def retry_openai_dynamic(method):
             with attempt:
                 return method(self, *args, **kwargs)
     return wrapper
-
-
-# Pydantic Class for Structured Output.
-class AssessmentResultPerCriteria(BaseModel):
-    """
-    Output format for the risk-of-bias assessment.
-    Each field requires explanation to guide the LLM in output generation.
-    """
-    explanation: str = Field(..., description="A detailed reasoning that supports the decision, based on evidence from the document.")
-    result: str = Field(..., description="The overall decision for this item. Respond only with one of ['yes', 'no'].")
-
 
 class PerCriteria:
     def __init__(self, assess: Assessment):
